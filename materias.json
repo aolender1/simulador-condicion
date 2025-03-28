@@ -1,0 +1,48 @@
+{
+    "calculo1-2025": {
+        "nombre": "Calculo I (2025)",
+        "tps": 0,
+        "parciales": 6,
+        "nombresParciales": [
+            "TPE Individual Unidades 1-2",
+            "Trabajo Grupal Unidades 1-2",
+            "TPE Individual Unidad 3",
+            "Trabajo Grupal Unidad 3", 
+            "TPE Individual Unidad 4",
+            "Trabajo Grupal Final"
+        ],
+        "pesos": [0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+        "condiciones": {
+            "promocion": { "minNotaParcial": 1, "minPromedioGeneral": 75, "minTpsAprobados": 0 },
+            "regular": { "minNotaParcial": 1, "minPromedioGeneral": 50, "minTpsAprobados": 0 }
+        }
+    },
+    "introalgebra-2025": {
+        "nombre": "Introduccion al Algebra (2025)",
+        "tps": 0,
+        "parciales": 4,
+        "nombresParciales": [
+            "Trabajo Teórico-Práctico Individual 1-2",
+            "Trabajo Práctico Grupal 1-2",
+            "Trabajo Teórico-Práctico Individual 3-4",
+            "Trabajo Práctico Grupal 3-4"
+        ],
+        "pesos": [0.2, 0.8, 0.2, 0.8],
+        "condiciones": {
+            "promocion": { "minNotaParcial": 1, "minPromedioGeneral": 75, "minTpsAprobados": 0 },
+            "regular": { "minNotaParcial": 1, "minPromedioGeneral": 60, "minTpsAprobados": 0 }
+        }
+    },
+    "ctys-2025": {
+    "nombre": "Ciencia, Tecnologia y Sociedad (2025)",
+    "tps": 3,
+    "parciales": 1,
+    "nombresParciales": ["Trabajo Integrador Final (TIF)"],
+    "nombresTps": ["TP1", "TP2", "TP3"],
+    "condiciones": {
+        "promocion": { "minNotaParcial": 6, "minPromedioGeneral": 7, "minTpsAprobados": 1.0 },
+        "regular": { "minNotaParcial": 0, "minPromedioGeneral": 6, "minTpsAprobados": 1.0 }
+    },
+    "asistencia": true
+    }
+}

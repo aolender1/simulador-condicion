@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Condición LAyGD</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="logo-unsl.png" alt="Logo UNSL">
+        </div>
+        <h1>Simulador de Condición de Materias de la Lic. en Analisis y Gestion de Datos de la UNSL</h1>
+        <div class="theme-switch">
+            <button id="themeToggle">🌙</button>
+        </div>
+    </header>
+
+    <div class="main-content">
+        <div class="container">
+            <h3>Simulador de Condición</h3>
+            <div class="form-group">
+                <label for="materiaSelect">Materia:</label>
+                <select id="materiaSelect"></select>
+            </div>
+
+            <form id="simuladorForm">
+                <div id="dynamicInputs"></div>
+                <button type="submit">Calcular Condición</button>
+            </form>
+        </div>
+
+        <div class="results-container">
+            <h3>Condición Final</h3>
+            <div class="icon-placeholder">🏆</div>
+            <div id="resultado">
+                <p id="condicionFinal">Selecciona una materia y completa los datos.</p>
+                <p id="descripcionCondicion"></p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>aolender | <a href="https://github.com/aolender1" target="_blank">GitHub</a></p>
+    </footer>
+
+    <script src="script.js" defer></script>
+</body>
+</html>
