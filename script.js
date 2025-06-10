@@ -48,10 +48,10 @@ function generateInputs(materiaKey) {
     const infoMessage = document.createElement('div');
     infoMessage.className = 'info-message';
     if (materiaKey === 'introalgebra-2025') {
-        // Specific message for Algebra with its unique alternating scales
-        infoMessage.textContent = 'Para Introducción al Álgebra: Parciales tipo "Individual" (1°, 3°, ...) son nota 0-10. Parciales tipo "Grupal" (2°, 4°, ...) son nota 0-80.';
+    // Specific message for Algebra with its unique alternating scales
+    infoMessage.textContent = 'Para Introducción al Álgebra: Parciales tipo "Individual" (1°, 3°, ...) son nota 0-10. Parciales tipo "Grupal" (2°, 4°, ...) son nota 0-80.';
     } else {
-        infoMessage.textContent = 'Ingresa las notas en porcentajes (0-100)';
+    infoMessage.textContent = 'Ingresa las notas en porcentajes (0-100)';
     }
     dynamicInputsDiv.appendChild(infoMessage);
 
@@ -71,6 +71,11 @@ function generateInputs(materiaKey) {
     // If we have named TPs, show individual inputs for each TP
     if (materia.nombresTps) {
     for (let i = 1; i <= materia.tps; i++) {
+    // START CHANGE: Limit TPs for ctys-2025 to TP1 and TP2
+    if (materiaKey === 'ctys-2025' && i > 2) {
+        continue; // Skip generating TP inputs beyond TP2 for ctys-2025
+    }
+    // END CHANGE
     const tpGroup = document.createElement('div');
     tpGroup.className = 'form-group';
 
@@ -98,31 +103,31 @@ function generateInputs(materiaKey) {
     // Inputs for Parciales - check if we have custom names (Remove 'required')
     // Modified to set specific max values for introalgebra-2025 based on odd/even index
     for (let i = 1; i <= materia.parciales; i++) {
-        const parcialGroup = document.createElement('div');
-        parcialGroup.className = 'form-group';
+    const parcialGroup = document.createElement('div');
+    parcialGroup.className = 'form-group';
 
-        // Use custom names if available
-        const parcialName = materia.nombresParciales && materia.nombresParciales[i - 1]
-        ? materia.nombresParciales[i - 1]
-        : `Nota Parcial ${i}`;
+    // Use custom names if available
+    const parcialName = materia.nombresParciales && materia.nombresParciales[i - 1]
+    ? materia.nombresParciales[i - 1]
+    : `Nota Parcial ${i}`;
 
-        let inputMax = 100; // Default max value for partial inputs
-        let inputMin = 0;   // Default min value
-        
-        // Specific handling for introalgebra-2025 partials based on odd/even index
-        if (materiaKey === 'introalgebra-2025') {
-            if (i % 2 !== 0) { // Odd partials (1st, 3rd, etc.) are "Individual" type
-                inputMax = 10;
-            } else { // Even partials (2nd, 4th, etc.) are "Grupal" type
-                inputMax = 80;
-            }
-        }
+    let inputMax = 100; // Default max value for partial inputs
+    let inputMin = 0;   // Default min value
+    
+    // Specific handling for introalgebra-2025 partials based on odd/even index
+    if (materiaKey === 'introalgebra-2025') {
+    if (i % 2 !== 0) { // Odd partials (1st, 3rd, etc.) are "Individual" type
+    inputMax = 10;
+    } else { // Even partials (2nd, 4th, etc.) are "Grupal" type
+    inputMax = 80;
+    }
+    }
 
-        parcialGroup.innerHTML = `
-        <label for="parcial${i}">${parcialName}:</label>
-        <input type="number" id="parcial${i}" name="parcial${i}" min="${inputMin}" max="${inputMax}" step="1">
-        `; // Removed 'required', added dynamic max
-        dynamicInputsDiv.appendChild(parcialGroup);
+    parcialGroup.innerHTML = `
+    <label for="parcial${i}">${parcialName}:</label>
+    <input type="number" id="parcial${i}" name="parcial${i}" min="${inputMin}" max="${inputMax}" step="1">
+    `; // Removed 'required', added dynamic max
+    dynamicInputsDiv.appendChild(parcialGroup);
     }
 
     // Reset results text and enable button when changing subject
@@ -187,37 +192,53 @@ function calcularCondicion(event) {
     // Process partial exam scores (common logic)
     // Modified to handle specific scaling for introalgebra-2025 based on odd/even index
     for (let i = 1; i <= materia.parciales; i++) {
-        const inputName = `parcial${i}`;
-        let rawNota; // The raw value from the input field
-        let scaledNota; // The value after scaling (if applicable), used for calculations
+    const inputName = `parcial${i}`;
+    let rawNota; // The raw value from the input field
+    let scaledNota; // The value after scaling (if applicable), used for calculations
 
-        if (selectedMateriaKey === 'introalgebra-2025') {
-            if (i % 2 !== 0) { // Odd partials (1st, 3rd, etc.) are "Individual" type
-                rawNota = getNota(inputName, 0, 10); // Validate raw score 0-10
-                if (!isNaN(rawNota)) {
-                    scaledNota = rawNota * 10; // Scale to 0-100 range for weighting
-                }
-            } else { // Even partials (2nd, 4th, etc.) are "Grupal" type
-                rawNota = getNota(inputName, 0, 80); // Validate raw score 0-80
-                if (!isNaN(rawNota)) {
-                    scaledNota = rawNota * 1.25; // Scale to 0-100 range for weighting
-                }
-            }
-        } else { // For all other subjects, assume standard 0-100 scale
-            rawNota = getNota(inputName); // Default 0-100 validation
-            if (!isNaN(rawNota)) {
-                scaledNota = rawNota; // No scaling needed
-            }
+    if (selectedMateriaKey === 'introalgebra-2025') {
+    if (i % 2 !== 0) { // Odd partials (1st, 3rd, etc.) are "Individual" type
+    rawNota = getNota(inputName, 0, 10); // Validate raw score 0-10
+    if (!isNaN(rawNota)) {
+    scaledNota = rawNota * 10; // Scale to 0-100 range for weighting
+    }
+    } else { // Even partials (2nd, 4th, etc.) are "Grupal" type
+    rawNota = getNota(inputName, 0, 80); // Validate raw score 0-80
+    if (!isNaN(rawNota)) {
+    scaledNota = rawNota * 1.25; // Scale to 0-100 range for weighting
+    }
+    }
+    } else { // For all other subjects, assume standard 0-100 scale
+    // For CTyS, 'parcial1' is TIF, handled later. This loop might not be relevant for CTyS if it has 0 "general" parciales.
+    // If CTyS uses 'parcial1' for TIF and materia.parciales is 1, this loop will run for TIF.
+    // We will handle TIF specifically in the CTyS block.
+    if (selectedMateriaKey !== 'ctys-2025' || (selectedMateriaKey === 'ctys-2025' && inputName !== 'parcial1')) {
+        rawNota = getNota(inputName); // Default 0-100 validation
+        if (!isNaN(rawNota)) {
+            scaledNota = rawNota; // No scaling needed
         }
+    } else if (selectedMateriaKey === 'ctys-2025' && inputName === 'parcial1') {
+        // Skip TIF processing here; it's handled in the CTyS specific block
+        // However, we need to ensure allParcialesEntered is correctly managed if TIF is the only "parcial"
+        const tifNotaStr = formData.get('parcial1');
+        if (tifNotaStr === null || tifNotaStr.trim() === '') {
+             allParcialesEntered = false; // If TIF is a "parcial" and it's empty
+        }
+        // rawNota and scaledNota will remain undefined here for TIF, handled later
+    }
 
-        // Use custom weights if defined, otherwise equal weight
-        const peso = materia.pesos && materia.pesos[i-1] ? materia.pesos[i-1] : (materia.parciales > 0 ? 1/materia.parciales : 0);
+    }
 
+    // Use custom weights if defined, otherwise equal weight
+    const peso = materia.pesos && materia.pesos[i-1] ? materia.pesos[i-1] : (materia.parciales > 0 ? 1/materia.parciales : 0);
+    
+    // This block is for general partials, TIF for CTyS is handled separately
+    if (!(selectedMateriaKey === 'ctys-2025' && inputName === 'parcial1')) {
         if (isNaN(rawNota)) { // Check rawNota for emptiness/invalidity (getNota handles alerts)
             allParcialesEntered = false;
             const notaStr = formData.get(inputName); // Check if it was an invalid entry vs. empty
             if (notaStr !== null && notaStr.trim() !== '') {
-                 // If getNota returned NaN for a non-empty string, it means it was invalid (e.g. out of range, not a number)
+                // If getNota returned NaN for a non-empty string, it means it was invalid (e.g. out of range, not a number)
                 notasParcialesValidas = false; 
             }
         }
@@ -233,6 +254,7 @@ function calcularCondicion(event) {
             // This case means an invalid value was entered (e.g. text, or out of range number)
             // notasParcialesValidas is already set to false by getNota's alert side-effect handling in the loop start
         }
+    }
     }
 
 
@@ -482,340 +504,320 @@ function calcularCondicion(event) {
 
     // --- Specific logic for algebra (MODIFIED FOR PARTIAL CALCULATION AND PROMOTION) ---
     if (selectedMateriaKey === 'introalgebra-2025') {
-        // Check for invalid inputs (parciales only for Algebra)
-        if (!notasParcialesValidas) {
-            displayResult("Error", "Verifica las notas de los parciales (deben ser números válidos según la escala indicada).", "error", "⚠️");
-            return;
-        }
+    // Check for invalid inputs (parciales only for Algebra)
+    if (!notasParcialesValidas) {
+    displayResult("Error", "Verifica las notas de los parciales (deben ser números válidos según la escala indicada).", "error", "⚠️");
+    return;
+    }
 
-        // Check if at least one partial was entered
-        if (!anyParcialEntered) {
-            displayResult("Estado: Pendiente", "Ingresa al menos una nota de parcial para calcular.", "pendiente", "📝");
-            return;
-        }
+    // Check if at least one partial was entered
+    if (!anyParcialEntered) {
+    displayResult("Estado: Pendiente", "Ingresa al menos una nota de parcial para calcular.", "pendiente", "📝");
+    return;
+    }
 
-        // Calculate provisional weighted average (from common loop, using scaled notes and weights)
-        const promedioProvisional = sumaPesos > 0 ? sumaPonderada / sumaPesos : NaN;
-        const esFinal = allParcialesEntered && notasParcialesValidas;
+    // Calculate provisional weighted average (from common loop, using scaled notes and weights)
+    const promedioProvisional = sumaPesos > 0 ? sumaPonderada / sumaPesos : NaN;
+    const esFinal = allParcialesEntered && notasParcialesValidas;
 
-        // Determine condition (Promotion, Regular, Libre)
-        let condicionFinal = "LIBRE"; // Default
-        let iconFinal = '❌';
-        let cssClassFinal = "libre";
-        let descripcionFinal = "";
+    // Determine condition (Promotion, Regular, Libre)
+    let condicionFinal = "LIBRE"; // Default
+    let iconFinal = '❌';
+    let cssClassFinal = "libre";
+    let descripcionFinal = "";
 
-        const promoCond = materia.condiciones.promocion;
-        const regularCond = materia.condiciones.regular;
+    const promoCond = materia.condiciones.promocion;
+    const regularCond = materia.condiciones.regular;
 
-        if (!isNaN(promedioProvisional)) {
-            // Base description with the calculated average
-            descripcionFinal = `Promedio (ponderado, escala 0-100): ${promedioProvisional.toFixed(2)}. `;
+    if (!isNaN(promedioProvisional)) {
+    // Base description with the calculated average
+    descripcionFinal = `Promedio (ponderado, escala 0-100): ${promedioProvisional.toFixed(2)}. `;
 
-            // Check for Promotion first
-            if (promoCond && promedioProvisional >= promoCond.minPromedioGeneral) {
-                let promoMinNotaOk = true;
-                // minNotaParcial is calculated on the SCALED (0-100) component scores
-                if (promoCond.hasOwnProperty('minNotaParcial') && minNotaParcial < promoCond.minNotaParcial) {
-                    promoMinNotaOk = false;
-                }
+    // Check for Promotion first
+    if (promoCond && promedioProvisional >= promoCond.minPromedioGeneral) {
+    let promoMinNotaOk = true;
+    // minNotaParcial is calculated on the SCALED (0-100) component scores
+    if (promoCond.hasOwnProperty('minNotaParcial') && minNotaParcial < promoCond.minNotaParcial) {
+    promoMinNotaOk = false;
+    }
 
-                if (promoMinNotaOk) {
-                    condicionFinal = "PROMOCIONADO";
-                    iconFinal = '🎉';
-                    cssClassFinal = "promocionado";
-                    descripcionFinal += "¡Felicitaciones! Cumples los requisitos para promocionar.";
-                } else {
-                    // Meets average for promo, but not minNotaParcial. Check Regular.
-                    descripcionFinal += `No promociona por nota mínima de parcial (requiere ${promoCond.minNotaParcial} en todos los componentes). `;
-                    // Fall through to check Regular status
-                }
-            }
-            
-            // Check for Regular if not Promocionado (or if promotion failed due to minNotaParcial)
-            if (condicionFinal !== "PROMOCIONADO" && regularCond && promedioProvisional >= regularCond.minPromedioGeneral) {
-                let regularMinNotaOk = true;
-                if (regularCond.hasOwnProperty('minNotaParcial') && minNotaParcial < regularCond.minNotaParcial) {
-                    regularMinNotaOk = false;
-                }
+    if (promoMinNotaOk) {
+    condicionFinal = "PROMOCIONADO";
+    iconFinal = '🎉';
+    cssClassFinal = "promocionado";
+    descripcionFinal += "¡Felicitaciones! Cumples los requisitos para promocionar.";
+    } else {
+    // Meets average for promo, but not minNotaParcial. Check Regular.
+    descripcionFinal += `No promociona por nota mínima de parcial (requiere ${promoCond.minNotaParcial} en todos los componentes). `;
+    // Fall through to check Regular status
+    }
+    }
+    
+    // Check for Regular if not Promocionado (or if promotion failed due to minNotaParcial)
+    if (condicionFinal !== "PROMOCIONADO" && regularCond && promedioProvisional >= regularCond.minPromedioGeneral) {
+    let regularMinNotaOk = true;
+    if (regularCond.hasOwnProperty('minNotaParcial') && minNotaParcial < regularCond.minNotaParcial) {
+    regularMinNotaOk = false;
+    }
 
-                if (regularMinNotaOk) {
-                    condicionFinal = "REGULAR";
-                    iconFinal = '🏆';
-                    cssClassFinal = "regular";
-                    descripcionFinal += "Condición: Regular. Debes rendir final.";
-                } else {
-                    // Meets average for regular, but not minNotaParcial for regular. So, Libre.
-                    condicionFinal = "LIBRE";
-                    iconFinal = '❌';
-                    cssClassFinal = "libre";
-                    descripcionFinal += `No regulariza por nota mínima de parcial (requiere ${regularCond.minNotaParcial} en todos los componentes). Condición: Libre.`;
-                }
-            } else if (condicionFinal !== "PROMOCIONADO") { 
-                // If not promo and not meeting regular average, it's Libre
-                condicionFinal = "LIBRE";
-                iconFinal = '❌';
-                cssClassFinal = "libre";
-                const regularUmbralText = regularCond ? regularCond.minPromedioGeneral : (promoCond ? promoCond.minPromedioGeneral : 'N/A');
-                descripcionFinal += `No cumples los requisitos de promedio (requiere ${regularUmbralText}). Condición: Libre.`;
-            }
-        } else {
-            // This case should be caught by !anyParcialEntered or !notasParcialesValidas earlier
-            // If it somehow reaches here with NaN, it's an error or no data state.
-            // The partial display logic below will handle it.
-        }
+    if (regularMinNotaOk) {
+    condicionFinal = "REGULAR";
+    iconFinal = '🏆';
+    cssClassFinal = "regular";
+    descripcionFinal += "Condición: Regular. Debes rendir final.";
+    } else {
+    // Meets average for regular, but not minNotaParcial for regular. So, Libre.
+    condicionFinal = "LIBRE";
+    iconFinal = '❌';
+    cssClassFinal = "libre";
+    descripcionFinal += `No regulariza por nota mínima de parcial (requiere ${regularCond.minNotaParcial} en todos los componentes). Condición: Libre.`;
+    }
+    } else if (condicionFinal !== "PROMOCIONADO") { 
+    // If not promo and not meeting regular average, it's Libre
+    condicionFinal = "LIBRE";
+    iconFinal = '❌';
+    cssClassFinal = "libre";
+    const regularUmbralText = regularCond ? regularCond.minPromedioGeneral : (promoCond ? promoCond.minPromedioGeneral : 'N/A');
+    descripcionFinal += `No cumples los requisitos de promedio (requiere ${regularUmbralText}). Condición: Libre.`;
+    }
+    } else {
+    // This case should be caught by !anyParcialEntered or !notasParcialesValidas earlier
+    // If it somehow reaches here with NaN, it's an error or no data state.
+    // The partial display logic below will handle it.
+    }
 
-        // Display result based on whether it's final or partial
-        if (!esFinal) {
-            let pendingDesc = "";
-            if (!isNaN(promedioProvisional)) {
-                pendingDesc = `Promedio parcial (ponderado, escala 0-100): ${promedioProvisional.toFixed(2)}. `;
-            } else if (anyParcialEntered && !notasParcialesValidas) {
-                pendingDesc = `Promedio parcial: No calculable debido a entradas inválidas. `;
-            } else { // No valid partials entered yet, or only one that doesn't form a full average
-                pendingDesc = `Promedio parcial: Calculando... `;
-            }
-            pendingDesc += " (Faltan datos o hay correcciones pendientes).";
+    // Display result based on whether it's final or partial
+    if (!esFinal) {
+    let pendingDesc = "";
+    if (!isNaN(promedioProvisional)) {
+    pendingDesc = `Promedio parcial (ponderado, escala 0-100): ${promedioProvisional.toFixed(2)}. `;
+    } else if (anyParcialEntered && !notasParcialesValidas) {
+    pendingDesc = `Promedio parcial: No calculable debido a entradas inválidas. `;
+    } else { // No valid partials entered yet, or only one that doesn't form a full average
+    pendingDesc = `Promedio parcial: Calculando... `;
+    }
+    pendingDesc += " (Faltan datos o hay correcciones pendientes).";
 
-            let tentativeStatusText = "Estado: Pendiente";
-            let tentativeIcon = "⏳"; // Default pending icon
-            
-            // Provide optimistic icon if possible based on current partial data
-            if (!isNaN(promedioProvisional)) {
-                if (promoCond && promedioProvisional >= promoCond.minPromedioGeneral && 
-                    (!promoCond.hasOwnProperty('minNotaParcial') || minNotaParcial >= promoCond.minNotaParcial)) {
-                    tentativeIcon = '🎉'; // Optimistic promo
-                } else if (regularCond && promedioProvisional >= regularCond.minPromedioGeneral &&
-                           (!regularCond.hasOwnProperty('minNotaParcial') || minNotaParcial >= regularCond.minNotaParcial)) {
-                    tentativeIcon = '🏆'; // Optimistic regular
-                } else if (anyParcialEntered) { 
-                    // If some data entered but doesn't meet regular/promo yet, could be libre
-                    tentativeIcon = '❌'; 
-                }
-            }
-            displayResult(tentativeStatusText, pendingDesc, "pendiente", tentativeIcon);
-        } else {
-            // Final calculation result
-            // Prepend "Condición Final: " to the status text for clarity
-            displayResult(`Condición Final: ${condicionFinal}`, descripcionFinal, cssClassFinal, iconFinal);
-        }
-        return; // Stop processing for Algebra
+    let tentativeStatusText = "Estado: Pendiente";
+    let tentativeIcon = "⏳"; // Default pending icon
+    
+    // Provide optimistic icon if possible based on current partial data
+    if (!isNaN(promedioProvisional)) {
+    if (promoCond && promedioProvisional >= promoCond.minPromedioGeneral && 
+    (!promoCond.hasOwnProperty('minNotaParcial') || minNotaParcial >= promoCond.minNotaParcial)) {
+    tentativeIcon = '🎉'; // Optimistic promo
+    } else if (regularCond && promedioProvisional >= regularCond.minPromedioGeneral &&
+    (!regularCond.hasOwnProperty('minNotaParcial') || minNotaParcial >= regularCond.minNotaParcial)) {
+    tentativeIcon = '🏆'; // Optimistic regular
+    } else if (anyParcialEntered) { 
+    // If some data entered but doesn't meet regular/promo yet, could be libre
+    tentativeIcon = '❌'; 
+    }
+    }
+    displayResult(tentativeStatusText, pendingDesc, "pendiente", tentativeIcon);
+    } else {
+    // Final calculation result
+    // Prepend "Condición Final: " to the status text for clarity
+    displayResult(`Condición Final: ${condicionFinal}`, descripcionFinal, cssClassFinal, iconFinal);
+    }
+    return; // Stop processing for Algebra
     }
 
     // --- Specific logic for CTyS ---
-// ... rest of code remains same
+    // START: Updated logic for CTyS (Ciencia, Tecnologia y Sociedad 2025)
     if (selectedMateriaKey === 'ctys-2025') {
-    // 1. Check Attendance (Prerequisite)
-    const asistenciaStr = formData.get('asistencia');
-    let asistencia = NaN;
-    let asistenciaValida = false; // True if a number is entered (valid or not for passing)
-    let asistenciaIngresada = false; // True if field is not empty
-    let asistenciaOk = false; // True if >= 75
+        const numTpsCtyS = 2; // CTyS specifically has 2 TPs for this logic (TP1, TP2)
 
-    if (asistenciaStr !== null && asistenciaStr.trim() !== '') {
-        asistenciaIngresada = true;
-        asistencia = parseInt(asistenciaStr, 10);
-        if (!isNaN(asistencia) && asistencia >= 0 && asistencia <= 100) {
-            asistenciaValida = true; // Valid number entered
-            if (asistencia < 75) {
-                // displayResult("LIBRE", `Asistencia (${asistencia}%) insuficiente (requiere 75%).`, "libre", "❌");
-                // return; // Fail fast - defer this to allow partial calculation display
-            } else {
-                asistenciaOk = true; // Attendance requirement met
-            }
-        } else {
-            // Invalid input, getNota would have alerted if used, manual alert here
-            alert('El porcentaje de asistencia debe estar entre 0 y 100.');
-            // asistenciaValida remains false
-            // displayResult("Error", "Asistencia inválida.", "error", "⚠️");
-            // return; // Defer to show partial state
-        }
-    }
+        // 1. Get Asistencia
+        const asistencia = getNota('asistencia'); // Uses default 0-100 validation and alerts
+        const asistenciaIngresada = formData.get('asistencia') !== null && formData.get('asistencia').trim() !== '';
+        const asistenciaOkParaCursada = !isNaN(asistencia) && asistencia >= 75;
 
-    // 2. Check TP scores (individual TPs)
-    let todasNotasTps = [];
-    let tpsAprobadosPromo = 0; // Count >= 70
-    let tpsAprobadosRegular = 0; // Count >= 60
-    let allTpsEntered = true; // Assume all entered until a blank one is found
-    let anyTpsEntered = false;
-    let tpsValidosGlobal = true; // Assume all TP inputs are valid numbers until proven otherwise
+        // 2. Get TP scores (TP1 and TP2)
+        let tpsNotasObtenidas = [];
+        let tpsValidosContador = 0;
+        let tpsRegularesContador = 0; // Count TPs >= 60
+        let tpsPromoContador = 0;     // Count TPs >= 70
+        let todosTpsRequeridosIngresadosYValidos = true;
+        let algunTpIngresado = false;
+        let algunTpIngresadoPeroInvalido = false; // Flag if any TP input was non-empty but invalid
 
-    for (let i = 1; i <= materia.tps; i++) {
-        const tpInputName = `tp${i}`;
-        const notaTp = getNota(tpInputName); // Uses default 0-100 validation
-
-        if (formData.get(tpInputName) === null || formData.get(tpInputName).trim() === '') {
-            allTpsEntered = false; // A TP input is empty
-        } else if (isNaN(notaTp)) {
-            allTpsEntered = false; // Also counts as not fully entered if invalid
-            tpsValidosGlobal = false; // An invalid TP score was entered
-        } else {
-            anyTpsEntered = true;
-            todasNotasTps.push(notaTp);
-            if (notaTp >= 70) tpsAprobadosPromo++;
-            if (notaTp >= 60) tpsAprobadosRegular++;
-        }
-    }
-    if (!anyTpsEntered && materia.tps > 0) allTpsEntered = false; // If no TPs entered at all
-
-    // 3. Check TIF note (parcial1 for CTyS)
-    let notaTif = NaN;
-    let tifEntered = false; // If field is not empty
-    let tifValido = false; // If field contains a valid number (0-100)
-    const tifInputName = 'parcial1'; // Assuming TIF is the first "parcial" for CTyS
-    const tifStr = formData.get(tifInputName);
-
-    if (tifStr !== null && tifStr.trim() !== '') {
-        tifEntered = true;
-        notaTif = getNota(tifInputName); // Uses default 0-100 validation
-        if (!isNaN(notaTif)) {
-            tifValido = true;
-        }
-    }
-    
-    // 4. Decision Logic (Handling Partial States)
-
-    // Critical input errors (invalid numbers entered, not just missing)
-    // Asistencia: !asistenciaValida && asistenciaIngresada (entered but not a valid number 0-100)
-    // TPs: !tpsValidosGlobal (implies some TP was entered but invalid)
-    // TIF: !tifValido && tifEntered (entered but not a valid number 0-100)
-    if ((!asistenciaValida && asistenciaIngresada) || !tpsValidosGlobal || (!tifValido && tifEntered)) {
-        let errorMsg = "Error: ";
-        if (!asistenciaValida && asistenciaIngresada) errorMsg += "Asistencia inválida. ";
-        if (!tpsValidosGlobal) errorMsg += "Verifica las notas de los TPs (0-100). ";
-        if (!tifValido && tifEntered) errorMsg += "Verifica la nota del TIF (0-100). ";
-        displayResult("Error", errorMsg.trim(), "error", "⚠️");
-        return;
-    }
-    
-    // Determine if the calculation can be considered "final"
-    // For CTyS: asistenciaOk, all TPs entered and valid, TIF entered and valid
-    const esFinal = asistenciaOk && allTpsEntered && tpsValidosGlobal && tifValido;
-
-    // --- Build Description and Determine Provisional Status ---
-    let descripcion = "";
-    let condicionProv = "LIBRE"; // Start assuming Libre
-    let iconProv = "❌";
-    let faltan = [];
-
-    // Asistencia
-    if (asistenciaIngresada) {
-        if (asistenciaValida) {
-            descripcion += `Asistencia: ${asistencia}% (${asistenciaOk ? 'OK' : 'Insuficiente'}). `;
-            if (!asistenciaOk) condicionProv = "LIBRE"; // If entered and insufficient, it's Libre
-        } else {
-            // Already handled by critical error check
-        }
-    } else {
-        faltan.push("asistencia (>=75%)");
-        condicionProv = "LIBRE"; // Cannot be regular/promo without knowing asistencia
-    }
-
-    // TPs
-    if (materia.tps > 0) {
-        descripcion += `TPs ingresados: ${todasNotasTps.length}/${materia.tps}. `;
-        if (anyTpsEntered && tpsValidosGlobal) {
-            descripcion += `(Regulares [>=60]: ${tpsAprobadosRegular}, Promoción [>=70]: ${tpsAprobadosPromo}). `;
-            // Check if any entered TP makes regularity impossible
-            if (todasNotasTps.some(n => n < 60)) {
-                condicionProv = "LIBRE"; // If any TP < 60, it's Libre
-            }
-        }
-        if (!allTpsEntered || !tpsValidosGlobal) {
-            faltan.push(`notas de TPs restantes ${!tpsValidosGlobal ? "o inválidas" : ""}`);
-             if (condicionProv !== "LIBRE") condicionProv = "PENDIENTE"; // If not already Libre, mark as pending
-        }
-         // If all TPs are entered and valid, but not enough for regular
-        if (allTpsEntered && tpsValidosGlobal && tpsAprobadosRegular < materia.tps) {
-            condicionProv = "LIBRE";
-        }
-    }
-
-
-    // TIF
-    if (tifEntered) {
-        if (tifValido) {
-            descripcion += `Nota TIF: ${notaTif}. `;
-        } else {
-            // Already handled by critical error check
-        }
-    } else {
-        faltan.push("nota TIF");
-        if (condicionProv !== "LIBRE") condicionProv = "PENDIENTE";
-    }
-
-    // Determine provisional status if not already set to LIBRE or PENDIENTE
-    if (condicionProv !== "LIBRE" && condicionProv !== "PENDIENTE") {
-        if (asistenciaOk && allTpsEntered && tpsValidosGlobal && tpsAprobadosRegular === materia.tps) {
-            // Potential Regular or Promocionado
-            if (tifValido) { // TIF is also entered and valid
-                if (tpsAprobadosPromo === materia.tps && notaTif >= 60) {
-                    condicionProv = "PROMOCIONADO";
-                    iconProv = "🎉";
+        for (let i = 1; i <= numTpsCtyS; i++) {
+            const tpInputName = `tp${i}`;
+            const notaTpStr = formData.get(tpInputName);
+            
+            if (notaTpStr !== null && notaTpStr.trim() !== '') {
+                algunTpIngresado = true;
+                const notaTp = getNota(tpInputName); // getNota handles alerts for invalid format/range
+                if (!isNaN(notaTp)) {
+                    tpsNotasObtenidas.push(notaTp);
+                    tpsValidosContador++;
+                    if (notaTp >= 60) tpsRegularesContador++;
+                    if (notaTp >= 70) tpsPromoContador++;
                 } else {
-                    condicionProv = "REGULAR";
-                    iconProv = "🏆";
+                    // getNota returned NaN for a non-empty string, meaning invalid input
+                    todosTpsRequeridosIngresadosYValidos = false;
+                    algunTpIngresadoPeroInvalido = true; 
                 }
             } else {
-                // TIF not entered or invalid, but other conditions for regular met
-                // If TIF is required for promotion, this path leads to regular or pending
-                if (tpsAprobadosPromo === materia.tps) { // Potential promo if TIF is good
-                     condicionProv = "PENDIENTE"; // Pending TIF for promotion
-                     iconProv = "🎉"; // Optimistic icon
-                } else {
-                     condicionProv = "PENDIENTE"; // Pending TIF for regular
-                     iconProv = "🏆"; // Optimistic icon
+                // An input field for a required TP is empty
+                todosTpsRequeridosIngresadosYValidos = false; 
+            }
+        }
+        // If numTpsCtyS is 0 (no TPs required), then this condition is met by default.
+        if (numTpsCtyS === 0) todosTpsRequeridosIngresadosYValidos = true;
+
+
+        // 3. Get TIF score (Trabajo Integrador Final - assumed to be 'parcial1' for CTyS)
+        const tifInputName = 'parcial1'; 
+        const notaTif = getNota(tifInputName); // getNota handles alerts
+        const tifIngresado = formData.get(tifInputName) !== null && formData.get(tifInputName).trim() !== '';
+        const tifValidoYEnRango = !isNaN(notaTif); // True if TIF is a valid number (0-100)
+
+        // 4. Critical input errors: check if any field was entered with invalid data
+        // getNota already alerts, this is to stop calculation and show a general error message.
+        if ((asistenciaIngresada && isNaN(asistencia)) || algunTpIngresadoPeroInvalido || (tifIngresado && !tifValidoYEnRango)) {
+            let errorMsg = "Error: ";
+            if (asistenciaIngresada && isNaN(asistencia)) errorMsg += "Asistencia inválida (debe ser 0-100). ";
+            if (algunTpIngresadoPeroInvalido) errorMsg += "Verifica las notas de los TPs (deben ser 0-100). ";
+            if (tifIngresado && !tifValidoYEnRango) errorMsg += "Verifica la nota del TIF (debe ser 0-100). ";
+            displayResult("Error", errorMsg.trim(), "error", "⚠️");
+            return;
+        }
+
+        // --- Build Description & Determine Status ---
+        let desc = "";
+        let status = "Estado: Pendiente"; // Default status
+        let css = "pendiente";
+        let icon = "⏳"; // Default icon
+        let faltanItems = []; // To list missing items for pending status
+
+        // Asistencia part of description
+        if (asistenciaIngresada && !isNaN(asistencia)) {
+            desc += `Asistencia: ${asistencia}% (${asistenciaOkParaCursada ? 'OK' : 'Insuficiente'}). `;
+        } else if (asistenciaIngresada && isNaN(asistencia)) {
+            // This case is handled by the critical error check above
+            desc += `Asistencia: Inválida. `;
+        } else { // Asistencia not entered
+            faltanItems.push("asistencia (>=75%)");
+        }
+
+        // TPs part of description
+        if (numTpsCtyS > 0) {
+            if (algunTpIngresado && !algunTpIngresadoPeroInvalido) { // Some TPs entered and valid
+                 desc += `TPs (${numTpsCtyS} requeridos): ${tpsValidosContador} válidos. Para Regular (>=60): ${tpsRegularesContador}. Para Promo (>=70): ${tpsPromoContador}. `;
+            } else if (algunTpIngresadoPeroInvalido) {
+                // Handled by critical error check
+                desc += `TPs: Contienen entradas inválidas. `;
+            } else { // No TPs entered at all
+                faltanItems.push(`TP1 y TP2`);
+            }
+            if (!todosTpsRequeridosIngresadosYValidos && algunTpIngresado && !algunTpIngresadoPeroInvalido) {
+                 faltanItems.push("notas de TPs restantes");
+            }
+        }
+
+
+        // TIF part of description
+        if (tifIngresado && tifValidoYEnRango) {
+            desc += `Nota TIF: ${notaTif}. `;
+        } else if (tifIngresado && !tifValidoYEnRango) {
+            // Handled by critical error check
+            desc += `Nota TIF: Inválida. `;
+        } else {
+            // TIF not entered. This is fine for regular status.
+            // It might be added to faltanItems later if needed for promotion.
+        }
+
+        // --- Logic for Final Conditions ---
+        // Condition for being able to regularize without TIF:
+        const puedeSerRegularSinTif = asistenciaOkParaCursada && todosTpsRequeridosIngresadosYValidos && tpsRegularesContador === numTpsCtyS;
+        // Condition for being able to be something (promo/regular) WITH TIF:
+        const puedeSerAlgoConTif = puedeSerRegularSinTif && tifIngresado && tifValidoYEnRango;
+
+        if (asistenciaIngresada && !isNaN(asistencia) && !asistenciaOkParaCursada) {
+            // Final: Libre due to insufficient asistencia
+            status = "Condición Final: LIBRE";
+            // desc already contains asistencia info
+            css = "libre";
+            icon = "❌";
+        } else if (todosTpsRequeridosIngresadosYValidos && tpsRegularesContador < numTpsCtyS) {
+            // Final: Libre because all TPs are in and valid, but not enough meet the >=60 requirement.
+            // This check assumes asistencia is either OK or not yet entered (if not entered, it will remain pending).
+            // If asistencia was entered and insufficient, the previous block would catch it.
+            if (asistenciaOkParaCursada || !asistenciaIngresada) { // Only if asistencia is OK or not yet a factor
+                 status = "Condición Final: LIBRE";
+                 desc += "No se cumplen los requisitos de aprobación en todos los TPs (ambos deben ser >= 60).";
+                 css = "libre";
+                 icon = "❌";
+            }
+        } else if (puedeSerAlgoConTif) {
+            // Final: Asistencia OK, All TPs OK for regular, TIF is IN and VALID
+            if (tpsPromoContador === numTpsCtyS && notaTif >= 60) { // All TPs >= 70 and TIF >= 60
+                status = "Condición Final: PROMOCIONADO";
+                css = "promocionado";
+                icon = "🎉";
+            } else { // Regular because TPs not all >=70 or TIF < 60 (but TPs are all >=60)
+                status = "Condición Final: REGULAR";
+                css = "regular";
+                icon = "🏆";
+            }
+        } else if (puedeSerRegularSinTif && !tifIngresado) {
+            // Final: Asistencia OK, All TPs OK for regular, TIF is NOT ENTERED
+            status = "Condición Final: REGULAR";
+            desc += "Cumple requisitos para regularizar sin TIF. Puede cargar nota TIF para intentar promocionar.";
+            css = "regular";
+            icon = "🏆";
+        } else {
+            // --- Pending State ---
+            // If none of the final conditions were met, it's pending.
+            // Status is already "Estado: Pendiente", css "pendiente", icon "⏳"
+            
+            // Refine faltanItems for pending message
+            if (puedeSerRegularSinTif && !tifIngresado && tpsPromoContador === numTpsCtyS) {
+                 // Is regular, TIF is missing, and TPs are good enough for promo.
+                 faltanItems.push("TIF (para posible promoción)");
+            } else if (puedeSerRegularSinTif && !tifIngresado) {
+                // Is regular, TIF is missing, but TPs are not good enough for promo. TIF is truly optional.
+                // No "faltan" for TIF in this specific sub-case.
+            } else if (!tifIngresado && (asistenciaOkParaCursada || !asistenciaIngresada) && (todosTpsRequeridosIngresadosYValidos || !algunTpIngresado) ) {
+                // If TIF is not entered, and other things are either OK or not entered yet.
+                faltanItems.push("TIF");
+            }
+            
+            // Remove duplicates from faltanItems just in case
+            faltanItems = [...new Set(faltanItems)];
+
+
+            if (faltanItems.length > 0) {
+                desc += ` (Faltan datos: ${faltanItems.join(', ')}).`;
+            } else if (!asistenciaIngresada && !algunTpIngresado && !tifIngresado && numTpsCtyS > 0) {
+                 desc = "Ingresa asistencia, notas de TP (TP1, TP2) y nota TIF para calcular.";
+                 icon = "📝";
+            } else if (!asistenciaIngresada && !tifIngresado && numTpsCtyS === 0) { // For a CTyS variant with no TPs
+                 desc = "Ingresa asistencia y nota TIF para calcular.";
+                 icon = "📝";
+            }
+
+
+            // Optimistic icon update for pending states
+            if (status === "Estado: Pendiente") {
+                if (asistenciaOkParaCursada && todosTpsRequeridosIngresadosYValidos && tpsPromoContador === numTpsCtyS && 
+                    (!tifIngresado || (tifValidoYEnRango && notaTif >=60)) ) {
+                    icon = "🎉"; // Optimistic promo
+                } else if (asistenciaOkParaCursada && todosTpsRequeridosIngresadosYValidos && tpsRegularesContador === numTpsCtyS) {
+                    icon = "🏆"; // Optimistic regular
+                } else if (asistenciaIngresada && !isNaN(asistencia) && !asistenciaOkParaCursada) {
+                    icon = "❌"; // Likely libre due to asistencia if other fields are filled
+                } else if (todosTpsRequeridosIngresadosYValidos && tpsRegularesContador < numTpsCtyS) {
+                    icon = "❌"; // Likely libre due to TPs if other fields are filled
                 }
             }
-        } else {
-            // Conditions for regular/promo not met even if all data were present
-            condicionProv = "LIBRE";
-            iconProv = "❌";
         }
+        displayResult(status, desc, css, icon);
+        return; // Calculation finished for CTyS
     }
-
-
-    // --- Display Result ---
-    if (!esFinal) {
-        if (faltan.length > 0) {
-            descripcion += ` (Faltan datos: ${faltan.join(', ')}).`;
-        }
-        
-        // If no data entered at all for CTyS specific fields
-        if (!asistenciaIngresada && !anyTpsEntered && !tifEntered && materia.tps > 0) {
-            displayResult("Estado: Pendiente", "Ingresa asistencia, notas de TP y nota TIF.", "pendiente", "📝");
-        } else if (!asistenciaIngresada && !tifEntered && materia.tps === 0) { // Case for CTyS without TPs
-             displayResult("Estado: Pendiente", "Ingresa asistencia y nota TIF.", "pendiente", "📝");
-        }
-        else {
-            // Use a generic pending status, icon depends on provisional assessment
-            let currentStatusText = "Estado: Pendiente";
-            let currentIcon = "⏳";
-            let currentClass = "pendiente";
-
-            if (condicionProv === "PROMOCIONADO") { // Optimistically show promo if it's the current path
-                currentIcon = "🎉";
-            } else if (condicionProv === "REGULAR") { // Optimistically show regular
-                currentIcon = "🏆";
-            } else if (condicionProv === "LIBRE") { // If current path leads to Libre
-                currentIcon = "❌";
-            }
-            // If it's just "PENDIENTE" from logic, keep icon as ⏳
-
-            displayResult(currentStatusText, descripcion, currentClass, currentIcon);
-        }
-    } else {
-        // Final Calculation (esFinal is true)
-        if (tpsAprobadosPromo === materia.tps && tifValido && notaTif >= 60 && asistenciaOk) {
-            displayResult("Condición Final: PROMOCIONADO", `¡Felicitaciones! ${descripcion}`, "promocionado", "🎉");
-        } else if (tpsAprobadosRegular === materia.tps && asistenciaOk && tifValido) { // tifValido implies TIF >=0, specific threshold for regular might not apply to TIF itself
-            displayResult("Condición Final: REGULAR", `${descripcion} Debes rendir final.`, "regular", "🏆");
-        }
-        else { // Default to Libre if not Promocionado or Regular
-            displayResult("Condición Final: LIBRE", `${descripcion}`, "libre", "❌");
-        }
-    }
-    return; // Calculation finished for CTyS
-    }
+    // END: Updated logic for CTyS
 
 
     // --- Final Default Calculation (IF NO SPECIFIC LOGIC MATCHED ABOVE) ---
@@ -825,11 +827,11 @@ function calcularCondicion(event) {
 
     // Check for invalid inputs first
     if (!notasParcialesValidas || !tpsDataValid) {
-        let errorMsg = "Error: ";
-        if (!notasParcialesValidas) errorMsg += "Verifica las notas de los parciales (deben ser números válidos según la escala indicada). ";
-        if (!tpsDataValid && materia.tps > 0 && !materia.nombresTps) errorMsg += `Verifica el número de TPs aprobados (debe ser entre 0 y ${materia.tps}).`;
-        displayResult("Error", errorMsg.trim(), "error", "⚠️");
-        return;
+    let errorMsg = "Error: ";
+    if (!notasParcialesValidas) errorMsg += "Verifica las notas de los parciales (deben ser números válidos según la escala indicada). ";
+    if (!tpsDataValid && materia.tps > 0 && !materia.nombresTps) errorMsg += `Verifica el número de TPs aprobados (debe ser entre 0 y ${materia.tps}).`;
+    displayResult("Error", errorMsg.trim(), "error", "⚠️");
+    return;
     }
 
     // Check if at least some data was entered
@@ -837,8 +839,8 @@ function calcularCondicion(event) {
     const noTpData = !(tpsEntered && tpsDataValid && materia.tps > 0 && !materia.nombresTps); 
 
     if (noParcialData && (materia.tps === 0 || (materia.tps > 0 && materia.nombresTps) || noTpData) ) { 
-        displayResult("Estado: Pendiente", "Ingresa al menos una nota para calcular un estado parcial.", "pendiente", "📝");
-        return;
+    displayResult("Estado: Pendiente", "Ingresa al menos una nota para calcular un estado parcial.", "pendiente", "📝");
+    return;
     }
 
 
@@ -860,104 +862,104 @@ function calcularCondicion(event) {
 
     let promoPosibleDefault = true; // Assume possible until a condition fails
     if (condPromocion) {
-        if (!isNaN(minNotaParcial) && minNotaParcial < condPromocion.minNotaParcial) promoPosibleDefault = false;
-        if (!isNaN(promedioParcialesDefault) && promedioParcialesDefault < condPromocion.minPromedioGeneral) promoPosibleDefault = false;
-        if (materia.tps > 0 && !materia.nombresTps) {
-            if (!isNaN(tpsPorcentajeDefault) && tpsPorcentajeDefault < condPromocion.minTpsAprobados) promoPosibleDefault = false;
-            // If all partials are entered but TPs are missing/invalid, promo is not possible if TPs are required for promo
-            else if (isNaN(tpsPorcentajeDefault) && allParcialesEntered && condPromocion.minTpsAprobados > 0) promoPosibleDefault = false;
-        }
+    if (!isNaN(minNotaParcial) && minNotaParcial < condPromocion.minNotaParcial) promoPosibleDefault = false;
+    if (!isNaN(promedioParcialesDefault) && promedioParcialesDefault < condPromocion.minPromedioGeneral) promoPosibleDefault = false;
+    if (materia.tps > 0 && !materia.nombresTps) {
+    if (!isNaN(tpsPorcentajeDefault) && tpsPorcentajeDefault < condPromocion.minTpsAprobados) promoPosibleDefault = false;
+    // If all partials are entered but TPs are missing/invalid, promo is not possible if TPs are required for promo
+    else if (isNaN(tpsPorcentajeDefault) && allParcialesEntered && condPromocion.minTpsAprobados > 0) promoPosibleDefault = false;
+    }
 
-        if (promoPosibleDefault) {
-            // If all required fields are present and conditions met for final decision
-            if (allParcialesEntered && 
-                (materia.tps === 0 || materia.nombresTps || (tpsEntered && tpsDataValid && (isNaN(tpsPorcentajeDefault) || tpsPorcentajeDefault >= (condPromocion.minTpsAprobados || 0) ))) &&
-                minNotaParcial >= (condPromocion.minNotaParcial || 0) &&
-                promedioParcialesDefault >= (condPromocion.minPromedioGeneral || 0)
-            ) {
-                 condicion = "PROMOCIONADO";
-                 cssClass = "promocionado";
-                 icon = '🎉';
-            } else if (esParcialDefault) { // Still possible if partial, keep optimistic
-                 condicion = "PROMOCIONADO"; 
-                 cssClass = "promocionado"; 
-                 icon = '🎉';
-            } else { // All data entered, but conditions not met
-                promoPosibleDefault = false; 
-            }
-        }
+    if (promoPosibleDefault) {
+    // If all required fields are present and conditions met for final decision
+    if (allParcialesEntered && 
+    (materia.tps === 0 || materia.nombresTps || (tpsEntered && tpsDataValid && (isNaN(tpsPorcentajeDefault) || tpsPorcentajeDefault >= (condPromocion.minTpsAprobados || 0) ))) &&
+    minNotaParcial >= (condPromocion.minNotaParcial || 0) &&
+    promedioParcialesDefault >= (condPromocion.minPromedioGeneral || 0)
+    ) {
+    condicion = "PROMOCIONADO";
+    cssClass = "promocionado";
+    icon = '🎉';
+    } else if (esParcialDefault) { // Still possible if partial, keep optimistic
+    condicion = "PROMOCIONADO"; 
+    cssClass = "promocionado"; 
+    icon = '🎉';
+    } else { // All data entered, but conditions not met
+    promoPosibleDefault = false; 
+    }
+    }
     } else {
-        promoPosibleDefault = false;
+    promoPosibleDefault = false;
     }
 
     let regularPosibleDefault = true;
     if (!promoPosibleDefault && condRegular) { // Check regular only if not promo
-        if (!isNaN(minNotaParcial) && minNotaParcial < condRegular.minNotaParcial) regularPosibleDefault = false;
-        if (!isNaN(promedioParcialesDefault) && promedioParcialesDefault < condRegular.minPromedioGeneral) regularPosibleDefault = false;
-        if (materia.tps > 0 && !materia.nombresTps) { 
-             if (!isNaN(tpsPorcentajeDefault) && tpsPorcentajeDefault < condRegular.minTpsAprobados) regularPosibleDefault = false;
-             else if (isNaN(tpsPorcentajeDefault) && allParcialesEntered && condRegular.minTpsAprobados > 0) regularPosibleDefault = false;
-        }
+    if (!isNaN(minNotaParcial) && minNotaParcial < condRegular.minNotaParcial) regularPosibleDefault = false;
+    if (!isNaN(promedioParcialesDefault) && promedioParcialesDefault < condRegular.minPromedioGeneral) regularPosibleDefault = false;
+    if (materia.tps > 0 && !materia.nombresTps) { 
+    if (!isNaN(tpsPorcentajeDefault) && tpsPorcentajeDefault < condRegular.minTpsAprobados) regularPosibleDefault = false;
+    else if (isNaN(tpsPorcentajeDefault) && allParcialesEntered && condRegular.minTpsAprobados > 0) regularPosibleDefault = false;
+    }
 
-        if (regularPosibleDefault) {
-            if (allParcialesEntered &&
-                (materia.tps === 0 || materia.nombresTps || (tpsEntered && tpsDataValid && (isNaN(tpsPorcentajeDefault) || tpsPorcentajeDefault >= (condRegular.minTpsAprobados || 0)))) &&
-                minNotaParcial >= (condRegular.minNotaParcial || 0) &&
-                promedioParcialesDefault >= (condRegular.minPromedioGeneral || 0)
-            ) {
-                condicion = "REGULAR";
-                cssClass = "regular";
-                icon = '🏆';
-            } else if (esParcialDefault) { 
-                condicion = "REGULAR"; 
-                cssClass = "regular"; 
-                icon = '🏆';
-            } else {
-                regularPosibleDefault = false;
-            }
-        }
+    if (regularPosibleDefault) {
+    if (allParcialesEntered &&
+    (materia.tps === 0 || materia.nombresTps || (tpsEntered && tpsDataValid && (isNaN(tpsPorcentajeDefault) || tpsPorcentajeDefault >= (condRegular.minTpsAprobados || 0)))) &&
+    minNotaParcial >= (condRegular.minNotaParcial || 0) &&
+    promedioParcialesDefault >= (condRegular.minPromedioGeneral || 0)
+    ) {
+    condicion = "REGULAR";
+    cssClass = "regular";
+    icon = '🏆';
+    } else if (esParcialDefault) { 
+    condicion = "REGULAR"; 
+    cssClass = "regular"; 
+    icon = '🏆';
+    } else {
+    regularPosibleDefault = false;
+    }
+    }
     } else if (promoPosibleDefault) { 
-        regularPosibleDefault = false;
+    regularPosibleDefault = false;
     }
 
 
     if (!promoPosibleDefault && !regularPosibleDefault) {
-        condicion = "LIBRE";
-        cssClass = "libre";
-        icon = '❌';
+    condicion = "LIBRE";
+    cssClass = "libre";
+    icon = '❌';
     }
 
 
     if (!isNaN(promedioParcialesDefault)) {
-        descripcionDefault += `Promedio parcial (escalado 0-100): ${promedioParcialesDefault.toFixed(2)}. `;
+    descripcionDefault += `Promedio parcial (escalado 0-100): ${promedioParcialesDefault.toFixed(2)}. `;
     }
     if (minNotaParcial !== Infinity && minNotaParcial !== -Infinity) { // Check for actual min value
-        descripcionDefault += `Nota mínima parcial (escalada 0-100): ${minNotaParcial}. `;
+    descripcionDefault += `Nota mínima parcial (escalada 0-100): ${minNotaParcial}. `;
     }
     if (materia.tps > 0 && !materia.nombresTps && tpsEntered && tpsDataValid) {
-        descripcionDefault += `TPs aprobados: ${tpsAprobadosNum}/${materia.tps}. `;
+    descripcionDefault += `TPs aprobados: ${tpsAprobadosNum}/${materia.tps}. `;
     } else if (materia.tps > 0 && !materia.nombresTps && tpsEntered && !tpsDataValid) {
-        descripcionDefault += `TPs aprobados: Inválido. `;
+    descripcionDefault += `TPs aprobados: Inválido. `;
     }
 
 
     if (esParcialDefault) {
-        condicion = "Estado: Pendiente"; 
-        let faltanDefault = [];
-        if (!allParcialesEntered) faltanDefault.push("notas de parciales");
-        if (materia.tps > 0 && !materia.nombresTps && (!tpsEntered || !tpsDataValid)) faltanDefault.push("cantidad de TPs aprobados (válida)");
-        
-        if (faltanDefault.length > 0) {
-            descripcionDefault += ` (Faltan datos: ${faltanDefault.join(', ')}).`;
-        } else if (!notasParcialesValidas) { 
-             descripcionDefault += ` (Corregir entradas inválidas).`;
-        }
-        cssClass = "pendiente"; 
-        // Icon remains based on optimistic provisional status (promo, regular, or libre if already determined by the logic above)
+    condicion = "Estado: Pendiente"; 
+    let faltanDefault = [];
+    if (!allParcialesEntered) faltanDefault.push("notas de parciales");
+    if (materia.tps > 0 && !materia.nombresTps && (!tpsEntered || !tpsDataValid)) faltanDefault.push("cantidad de TPs aprobados (válida)");
+    
+    if (faltanDefault.length > 0) {
+    descripcionDefault += ` (Faltan datos: ${faltanDefault.join(', ')}).`;
+    } else if (!notasParcialesValidas) { 
+    descripcionDefault += ` (Corregir entradas inválidas).`;
+    }
+    cssClass = "pendiente"; 
+    // Icon remains based on optimistic provisional status (promo, regular, or libre if already determined by the logic above)
     } else {
-        if (condicion === "PROMOCIONADO") descripcionDefault = `¡Felicitaciones! Condición Final: Promocionado. ${descripcionDefault} Cumples todos los requisitos.`;
-        else if (condicion === "REGULAR") descripcionDefault = `Condición Final: Regularizado. ${descripcionDefault} Debes rendir final.`;
-        else descripcionDefault = `Condición Final: Libre. ${descripcionDefault}`; 
+    if (condicion === "PROMOCIONADO") descripcionDefault = `¡Felicitaciones! Condición Final: Promocionado. ${descripcionDefault} Cumples todos los requisitos.`;
+    else if (condicion === "REGULAR") descripcionDefault = `Condición Final: Regularizado. ${descripcionDefault} Debes rendir final.`;
+    else descripcionDefault = `Condición Final: Libre. ${descripcionDefault}`; 
     }
 
     displayResult(condicion, descripcionDefault, cssClass, icon);
