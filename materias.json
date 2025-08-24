@@ -1,6 +1,6 @@
 {
     "calculo1-2025": {
-        "nombre": "Calculo I (2025)",
+        "nombre": "1- Calculo I (2025)",
         "tps": 0,
         "parciales": 6,
         "nombresParciales": [
@@ -18,7 +18,7 @@
         }
     },
     "introalgebra-2025": {
-        "nombre": "Introduccion al Algebra (2025)",
+        "nombre": "1- Introduccion al Algebra (2025)",
         "tps": 0,
         "parciales": 4,
         "nombresParciales": [
@@ -34,22 +34,39 @@
         }
     },
     "ctys-2025": {
-    "nombre": "Ciencia, Tecnología y Sociedad (2025)",
-    "asistencia": true,
-    "parciales": 1,
-    "tps": 2,
-    "condiciones": {
-      "promocion": {
-        "minAsistencia": 75,
-        "minTP1": 70,
-        "minTP2": 70,
-        "minTIF": 60
-      },
-      "regular": {
-        "minAsistencia": 75,
-        "minTP1": 60,
-        "minTP2": 60
-      }
+        "nombre": "1- Ciencia, Tecnología y Sociedad (2025)",
+        "asistencia": true,
+        "parciales": 1,
+        "tps": 2,
+        "condiciones": {
+            "promocion": {
+                "minAsistencia": 75,
+                "minTP1": 70,
+                "minTP2": 70,
+                "minTIF": 60
+            },
+            "regular": {
+                "minAsistencia": 75,
+                "minTP1": 60,
+                "minTP2": 60
+            }
+        }
+    },
+    "algebramatricial-2025": {
+        "nombre": "1- Algebra Matricial (2025)",
+        "tps": 0,
+        "parciales": 5,
+        "nombresParciales": [
+            "TPE Individual Unidad 1",
+            "Trabajo Grupal Unidad 2",
+            "TPE Individual Unidad 3",
+            "Trabajo Grupal Unidad 4",
+            "Trabajo Grupal Final"
+        ],
+        "pesos": [0.2, 0.2, 0.2, 0.2, 0.2],
+        "condiciones": {
+            "promocion": { "minPromedioFinal": 75 },
+            "regular": { "minPromedioFinal": 50 }
+        }
     }
-  }
 }

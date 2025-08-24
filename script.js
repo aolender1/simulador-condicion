@@ -18,6 +18,7 @@ async function cargarHandlers() {
         'materias/calculo1-2025.js',
         'materias/introalgebra-2025.js',
         'materias/ctys-2025.js',
+        'materias/algebramatricial-2025.js',
         'materias/default-materia.js'
     ];
 
@@ -34,6 +35,7 @@ async function cargarHandlers() {
         'calculo1-2025': Calculo12025,
         'introalgebra-2025': IntroAlgebra2025,
         'ctys-2025': CtyS2025,
+        'algebramatricial-2025': AlgebraMatricial2025,
         'default': DefaultMateria
     };
 }
