@@ -15,6 +15,8 @@ const iconPlaceholder = document.querySelector('.icon-placeholder');
 async function cargarHandlers() {
     const scripts = [
         'materias/base-materia.js',
+        'materias/elementosprog-2025.js',
+        'materias/introdatos2025.js',
         'materias/calculo1-2025.js',
         'materias/introalgebra-2025.js',
         'materias/ctys-2025.js',
@@ -32,10 +34,12 @@ async function cargarHandlers() {
 
     // Registrar handlers
     materiaHandlers = {
+        'elementosprog-2025': ElementosProg2025,
         'calculo1-2025': Calculo12025,
         'introalgebra-2025': IntroAlgebra2025,
         'ctys-2025': CtyS2025,
         'algebramatricial-2025': AlgebraMatricial2025,
+        'introdatos-2025': IntroDatos2025,
         'default': DefaultMateria
     };
 }

@@ -7,7 +7,7 @@
             "TPE Individual Unidades 1-2",
             "Trabajo Grupal Unidades 1-2",
             "TPE Individual Unidad 3",
-            "Trabajo Grupal Unidad 3", 
+            "Trabajo Grupal Unidad 3",
             "TPE Individual Unidad 4",
             "Trabajo Grupal Final"
         ],
@@ -67,6 +67,35 @@
         "condiciones": {
             "promocion": { "minPromedioFinal": 75 },
             "regular": { "minPromedioFinal": 50 }
+        }
+    },
+    "introdatos-2025": {
+        "nombre": "1- Introducción al Análisis y Gestión de Datos (2025)",
+        "tps": 0,
+        "parciales": 2,
+        "nombresParciales": [
+            "TPE nº1 (Unidades 1, 2, 3 y 4)",
+            "TPE nº2 (Unidades 5, 6 y 7)"
+        ],
+        "pesos": [0.5, 0.5],
+        "condiciones": {
+            "promocion": { "minNotaParcial": 1, "minPromedioGeneral": 70, "minTpsAprobados": 0 },
+            "regular": { "minNotaParcial": 1, "minPromedioGeneral": 40, "minTpsAprobados": 0 }
+        }
+    },
+    "elementosprog-2025": {
+        "nombre": "1- Elementos de Programación (2025)",
+        "tps": 0,
+        "parciales": 3,
+        "nombresParciales": [
+            "TPE 1 - Unidades 1, 2 y 3",
+            "TPE 2 - Unidades 4 y 5",
+            "Actividad Integradora Final"
+        ],
+        "pesos": [0.5, 0.5, 1],
+        "condiciones": {
+            "promocion": { "minPromedioTPEs": 70, "minActividadFinal": 60 },
+            "regular": { "minPromedioTPEs": 60, "minActividadFinal": 60 }
         }
     }
 }
