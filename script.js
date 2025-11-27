@@ -58,7 +58,7 @@ function loadScript(src) {
 // Función para poblar el select de materias
 function populateMateriaSelect() {
     materiaSelect.innerHTML = '<option value="">Selecciona una materia</option>';
-    
+
     for (const [key, materia] of Object.entries(materiasData)) {
         const option = document.createElement('option');
         option.value = key;
@@ -70,7 +70,7 @@ function populateMateriaSelect() {
 // Función para generar inputs dinámicos
 function generateInputs(selectedMateriaKey) {
     dynamicInputsDiv.innerHTML = '';
-    
+
     if (!selectedMateriaKey || !materiasData[selectedMateriaKey]) {
         const infoDiv = document.createElement('div');
         infoDiv.className = 'info-message';
@@ -80,7 +80,7 @@ function generateInputs(selectedMateriaKey) {
     }
 
     const materia = materiasData[selectedMateriaKey];
-    
+
     // Casos especiales - materias que generan sus propios inputs
     if (selectedMateriaKey === 'ctys-2025') {
         CtyS2025.generateInputs(dynamicInputsDiv);
@@ -92,11 +92,11 @@ function generateInputs(selectedMateriaKey) {
     if (materia.asistencia) {
         const formGroup = document.createElement('div');
         formGroup.className = 'form-group';
-        
+
         const label = document.createElement('label');
         label.setAttribute('for', 'asistencia');
         label.textContent = 'Asistencia (%):';
-        
+
         const input = document.createElement('input');
         input.type = 'number';
         input.id = 'asistencia';
@@ -105,7 +105,7 @@ function generateInputs(selectedMateriaKey) {
         input.max = '100';
         input.step = '0.1';
         input.placeholder = '0-100';
-        
+
         formGroup.appendChild(label);
         formGroup.appendChild(input);
         dynamicInputsDiv.appendChild(formGroup);
@@ -116,22 +116,22 @@ function generateInputs(selectedMateriaKey) {
         for (let i = 1; i <= materia.parciales; i++) {
             const formGroup = document.createElement('div');
             formGroup.className = 'form-group';
-            
+
             const label = document.createElement('label');
             label.setAttribute('for', `parcial${i}`);
-            
+
             // Usar nombres personalizados si existen
-            if (materia.nombresParciales && materia.nombresParciales[i-1]) {
-                label.textContent = `${materia.nombresParciales[i-1]}:`;
+            if (materia.nombresParciales && materia.nombresParciales[i - 1]) {
+                label.textContent = `${materia.nombresParciales[i - 1]}:`;
             } else {
                 label.textContent = `Parcial ${i}:`;
             }
-            
+
             const input = document.createElement('input');
             input.type = 'number';
             input.id = `parcial${i}`;
             input.name = `parcial${i}`;
-            
+
             // Configurar rangos específicos para algunas materias
             if (selectedMateriaKey === 'introalgebra-2025') {
                 if (i % 2 !== 0) { // Impar - Individual
@@ -151,7 +151,7 @@ function generateInputs(selectedMateriaKey) {
                 input.step = '0.1';
                 input.placeholder = '0-100';
             }
-            
+
             formGroup.appendChild(label);
             formGroup.appendChild(input);
             dynamicInputsDiv.appendChild(formGroup);
@@ -165,11 +165,11 @@ function generateInputs(selectedMateriaKey) {
             for (let i = 1; i <= materia.tps; i++) {
                 const formGroup = document.createElement('div');
                 formGroup.className = 'form-group';
-                
+
                 const label = document.createElement('label');
                 label.setAttribute('for', `tp${i}`);
-                label.textContent = `${materia.nombresTps[i-1]}:`;
-                
+                label.textContent = `${materia.nombresTps[i - 1]}:`;
+
                 const input = document.createElement('input');
                 input.type = 'number';
                 input.id = `tp${i}`;
@@ -178,7 +178,7 @@ function generateInputs(selectedMateriaKey) {
                 input.max = '100';
                 input.step = '0.1';
                 input.placeholder = '0-100';
-                
+
                 formGroup.appendChild(label);
                 formGroup.appendChild(input);
                 dynamicInputsDiv.appendChild(formGroup);
@@ -187,11 +187,11 @@ function generateInputs(selectedMateriaKey) {
             // Contador de TPs aprobados
             const formGroup = document.createElement('div');
             formGroup.className = 'form-group';
-            
+
             const label = document.createElement('label');
             label.setAttribute('for', 'tpsAprobados');
             label.textContent = `TPs Aprobados (de ${materia.tps}):`;
-            
+
             const input = document.createElement('input');
             input.type = 'number';
             input.id = 'tpsAprobados';
@@ -200,7 +200,7 @@ function generateInputs(selectedMateriaKey) {
             input.max = materia.tps.toString();
             input.step = '1';
             input.placeholder = `0-${materia.tps}`;
-            
+
             formGroup.appendChild(label);
             formGroup.appendChild(input);
             dynamicInputsDiv.appendChild(formGroup);
@@ -222,7 +222,7 @@ function calcularCondicion(event) {
     const getNota = (name, minVal = 0, maxVal = 100) => {
         const notaStr = formData.get(name);
         if (notaStr === null || notaStr.trim() === '') return NaN;
-        
+
         const nota = parseFloat(notaStr);
         if (isNaN(nota) || nota < minVal || nota > maxVal) {
             const labelElement = document.querySelector(`label[for="${name}"]`);
@@ -260,19 +260,19 @@ function calcularCondicion(event) {
 function setupThemeToggle() {
     const themeToggle = document.getElementById('themeToggle');
     const body = document.body;
-    
+
     // Verificar preferencia guardada
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) {
         body.classList.toggle('dark-theme', savedTheme === 'dark');
         themeToggle.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
     }
-    
+
     // Event listener para toggle
     themeToggle.addEventListener('click', () => {
         body.classList.toggle('dark-theme');
         const isDark = body.classList.contains('dark-theme');
-        
+
         themeToggle.textContent = isDark ? '☀️' : '🌙';
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
     });
@@ -298,6 +298,9 @@ async function initializeSimulator() {
         form.addEventListener('submit', calcularCondicion);
         setupThemeToggle();
 
+        // Inicializar Calendario
+        initializeCalendar();
+
     } catch (error) {
         console.error('Error initializing simulator:', error);
         materiaSelect.innerHTML = '<option value="">Error al cargar materias</option>';
@@ -309,3 +312,136 @@ async function initializeSimulator() {
 }
 
 initializeSimulator();
+// Funci�n para inicializar el calendario
+function initializeCalendar() {
+    const calendarEl = document.getElementById('calendar');
+    const calendarMessage = document.getElementById('calendar-message');
+
+    if (!calendarEl) return;
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'es',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,listMonth'
+        },
+        buttonText: {
+            today: 'Hoy',
+            month: 'Mes',
+            list: 'Lista'
+        },
+        events: function (info, successCallback, failureCallback) {
+            // URL de tu Google Sheet publicado como CSV
+            const GOOGLE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHniUNfOA8JTrnlzovWRIoD_VFprq9UL10Yhbqx4eSuf_fwiO5RFORoL8kluvUPLwNJpZZWnsb_1ri/pub?gid=0&single=true&output=csv';
+
+            Papa.parse(GOOGLE_SHEET_URL, {
+                download: true,
+                header: true,
+                complete: function (results) {
+                    console.log('Datos cargados:', results.data);
+                    const events = results.data
+                        .filter(row => row.title && row.title.trim() !== '' && row.start && row.start.trim() !== '') // Filtrar filas vac�as
+                        .map(row => ({
+                            title: row.Materia ? `${row.Materia}: ${row.title}` : row.title,
+                            start: row.start,
+                            end: row.end || null,
+                            color: row.color || null,
+                            extendedProps: {
+                                materia: row.Materia || '',
+                                originalTitle: row.title
+                            }
+                        }));
+
+                    console.log('Eventos procesados:', events);
+
+                    if (events.length === 0) {
+                        calendarMessage.style.display = 'block';
+                    } else {
+                        calendarMessage.style.display = 'none';
+                    }
+
+                    successCallback(events);
+                },
+                error: function (error) {
+                    console.error('Error cargando desde Google Sheets:', error);
+                    failureCallback(error);
+                    calendarMessage.textContent = 'Error al cargar las actividades.';
+                    calendarMessage.style.display = 'block';
+                    calendarMessage.style.color = 'var(--libre-color)';
+                }
+            });
+        },
+        eventDidMount: function (info) {
+            const materia = info.event.extendedProps.materia || '';
+            const title = info.event.extendedProps.originalTitle || info.event.title;
+            info.el.title = materia ? `${materia}\n${title}` : title;
+        },
+        eventClick: function (info) {
+            info.jsEvent.preventDefault();
+
+            const materia = info.event.extendedProps.materia || 'Sin materia';
+            const title = info.event.extendedProps.originalTitle || info.event.title;
+            const start = info.event.start;
+            const end = info.event.end;
+
+            const formatDate = (date) => {
+                if (!date) return '';
+                const options = {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                };
+                return date.toLocaleDateString('es-AR', options);
+            };
+
+            const modal = document.getElementById('eventModal');
+            document.getElementById('modalMateria').textContent = materia;
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalStart').textContent = formatDate(start);
+
+            const endContainer = document.getElementById('modalEndContainer');
+            if (end) {
+                document.getElementById('modalEnd').textContent = formatDate(end);
+                endContainer.style.display = 'flex';
+            } else {
+                endContainer.style.display = 'none';
+            }
+
+            modal.style.display = 'block';
+        }
+    });
+
+    calendar.render();
+}
+
+// Funci�n para cerrar el modal
+function closeModal() {
+    const modal = document.getElementById('eventModal');
+    modal.style.display = 'none';
+}
+
+// Event listeners para cerrar el modal
+window.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('eventModal');
+    const closeBtn = document.querySelector('.modal-close');
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeModal);
+    }
+
+    window.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            closeModal();
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && modal.style.display === 'block') {
+            closeModal();
+        }
+    });
+});

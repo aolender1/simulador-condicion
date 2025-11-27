@@ -49,7 +49,8 @@ body {
 /* Estilos para header */
 header {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
+    position: relative;
     align-items: center;
     background-color: var(--header-bg);
     color: var(--header-text);
@@ -66,6 +67,11 @@ header h1 {
 
 .logo img {
     height: 40px;
+}
+
+.theme-switch {
+    position: absolute;
+    right: 20px;
 }
 
 .theme-switch button {
@@ -111,7 +117,7 @@ header h1 {
     border-radius: 8px;
     box-shadow: 0 2px 10px var(--shadow-color);
     width: 100%;
-    max-width: 300px;
+    max-width: 400px;
     text-align: center;
 }
 
@@ -206,9 +212,17 @@ button:hover {
     font-size: 0.95em;
 }
 
-.libre { color: var(--libre-color); }
-.regular { color: var(--regular-color); }
-.promocionado { color: var(--promocionado-color); }
+.libre {
+    color: var(--libre-color);
+}
+
+.regular {
+    color: var(--regular-color);
+}
+
+.promocionado {
+    color: var(--promocionado-color);
+}
 
 .icon-placeholder {
     font-size: 4em;
@@ -247,39 +261,289 @@ footer a:hover {
     header h1 {
         font-size: 1rem;
     }
-    
+
     .logo img {
         height: 30px;
     }
-    
+
     .main-content {
         flex-direction: column;
         padding: 15px;
         gap: 15px;
         align-items: center;
     }
-    
-    .container, .results-container {
+
+    .container,
+    .results-container {
         max-width: 100%;
         margin-bottom: 15px;
     }
-    
+
     .form-group {
         flex-direction: column;
         align-items: flex-start;
     }
-    
+
     label {
         margin-bottom: 8px;
         margin-right: 0;
     }
-    
-    select, input[type="number"] {
+
+    select,
+    input[type="number"] {
         width: 100%;
         text-align: left;
     }
-    
+
     #materiaSelect {
         width: 100%;
+    }
+}
+
+/* Estilos para el calendario */
+.calendar-container {
+    background-color: var(--container-bg);
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px var(--shadow-color);
+    width: 100%;
+}
+
+/* FullCalendar custom styling */
+.fc {
+    font-family: sans-serif;
+}
+
+.fc .fc-toolbar-title {
+    font-size: 1.3rem;
+    color: var(--text-color);
+    font-weight: bold;
+}
+
+.fc .fc-button {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: white !important;
+    text-transform: capitalize;
+    padding: 6px 12px;
+    font-size: 0.9rem;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+.fc .fc-button:hover {
+    background-color: #004d40 !important;
+    border-color: #004d40 !important;
+}
+
+.fc .fc-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.fc .fc-button-active {
+    background-color: #004d40 !important;
+    border-color: #004d40 !important;
+}
+
+.fc .fc-toolbar {
+    gap: 10px;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.fc .fc-toolbar-chunk {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.fc .fc-button-group {
+    display: flex;
+    gap: 5px;
+}
+
+.fc-theme-standard td,
+.fc-theme-standard th {
+    border-color: var(--border-color);
+}
+
+.fc-theme-standard .fc-scrollgrid {
+    border-color: var(--border-color);
+}
+
+.fc .fc-daygrid-day-number {
+    color: var(--text-color);
+}
+
+.fc .fc-col-header-cell-cushion {
+    color: var(--text-color);
+    font-weight: bold;
+}
+
+.fc .fc-daygrid-day.fc-day-today {
+    background-color: var(--input-bg) !important;
+}
+
+.fc-event {
+    cursor: pointer;
+}
+
+.fc-event-title {
+    font-weight: normal;
+}
+
+/* Dark theme adjustments for calendar */
+.dark-theme .fc .fc-toolbar-title {
+    color: var(--text-color);
+}
+
+.dark-theme .fc .fc-daygrid-day-number {
+    color: var(--text-color);
+}
+
+.dark-theme .fc .fc-col-header-cell-cushion {
+    color: var(--text-color);
+}
+
+.dark-theme .fc-theme-standard td,
+.dark-theme .fc-theme-standard th {
+    border-color: var(--border-color);
+}
+
+.dark-theme .fc-theme-standard .fc-scrollgrid {
+    border-color: var(--border-color);
+}
+
+.dark-theme .fc-list-day-cushion {
+    background-color: var(--input-bg);
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+    background-color: var(--container-bg);
+    margin: 10% auto;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px var(--shadow-color);
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    animation: slideDown 0.3s ease;
+}
+
+.modal-close {
+    color: var(--text-color);
+    position: absolute;
+    right: 20px;
+    top: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s ease, transform 0.2s ease;
+}
+
+.modal-close:hover,
+.modal-close:focus {
+    color: var(--primary-color);
+    transform: rotate(90deg);
+}
+
+.modal-materia {
+    color: var(--primary-color);
+    margin: 0 0 10px 0;
+    font-size: 1.5em;
+    text-align: center;
+}
+
+.modal-title {
+    color: var(--text-color);
+    margin: 0 0 25px 0;
+    font-size: 1.2em;
+    text-align: center;
+    font-weight: normal;
+}
+
+.modal-details {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.modal-detail-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 15px;
+    background-color: var(--input-bg);
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-color);
+}
+
+.modal-icon {
+    font-size: 1.5em;
+    flex-shrink: 0;
+}
+
+.modal-detail-item strong {
+    color: var(--primary-color);
+    display: block;
+    margin-bottom: 5px;
+}
+
+.modal-detail-item p {
+    margin: 0;
+    color: var(--text-color);
+    line-height: 1.5;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .modal-content {
+        margin: 20% auto;
+        padding: 20px;
+        width: 95%;
+    }
+
+    .modal-materia {
+        font-size: 1.2em;
+    }
+
+    .modal-title {
+        font-size: 1em;
     }
 }

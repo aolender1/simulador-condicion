@@ -1,17 +1,18 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulador de Condición LAyGD</title>
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
     <link rel="stylesheet" href="style.css">
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
+
 <body>
     <header>
-        <div class="logo">
-            <img src="logo-unsl.png" alt="Logo UNSL">
-        </div>
         <h1>Simulador de Condición de Materias de la Lic. en Analisis y Gestion de Datos de la UNSL</h1>
         <div class="theme-switch">
             <button id="themeToggle">🌙</button>
@@ -19,25 +20,38 @@
     </header>
 
     <div class="main-content">
-        <div class="container">
-            <h3>Simulador de Condición</h3>
-            <div class="form-group">
-                <label for="materiaSelect">Materia:</label>
-                <select id="materiaSelect"></select>
+        <div class="left-column">
+            <div class="container">
+                <h3>Simulador de Condición</h3>
+                <div class="form-group">
+                    <label for="materiaSelect">Materia:</label>
+                    <select id="materiaSelect"></select>
+                </div>
+
+                <form id="simuladorForm">
+                    <div id="dynamicInputs"></div>
+                    <button type="submit">Calcular Condición</button>
+                </form>
             </div>
 
-            <form id="simuladorForm">
-                <div id="dynamicInputs"></div>
-                <button type="submit">Calcular Condición</button>
-            </form>
+            <div class="results-container">
+                <h3>Condición Final</h3>
+                <div class="icon-placeholder">🏆</div>
+                <div id="resultado">
+                    <p id="condicionFinal">Selecciona una materia y completa los datos.</p>
+                    <p id="descripcionCondicion"></p>
+                </div>
+            </div>
         </div>
 
-        <div class="results-container">
-            <h3>Condición Final</h3>
-            <div class="icon-placeholder">🏆</div>
-            <div id="resultado">
-                <p id="condicionFinal">Selecciona una materia y completa los datos.</p>
-                <p id="descripcionCondicion"></p>
+        <div class="right-column">
+            <div class="calendar-container">
+                <h3>Calendario de Actividades</h3>
+                <div id="calendar"></div>
+                <div id="calendar-message"
+                    style="display: none; text-align: center; margin-top: 10px; color: var(--text-color);">
+                    No hay actividades por hacer aún.
+                </div>
             </div>
         </div>
     </div>
@@ -46,6 +60,32 @@
         <p>aolender | <a href="https://github.com/aolender1" target="_blank">GitHub</a></p>
     </footer>
 
+    <!-- Modal para detalles del evento -->
+    <div id="eventModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h3 id="modalMateria" class="modal-materia"></h3>
+            <h4 id="modalTitle" class="modal-title"></h4>
+            <div class="modal-details">
+                <div class="modal-detail-item">
+                    <span class="modal-icon">📅</span>
+                    <div>
+                        <strong>Inicio:</strong>
+                        <p id="modalStart"></p>
+                    </div>
+                </div>
+                <div class="modal-detail-item" id="modalEndContainer" style="display: none;">
+                    <span class="modal-icon">🏁</span>
+                    <div>
+                        <strong>Fin:</strong>
+                        <p id="modalEnd"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js" defer></script>
 </body>
+
 </html>
