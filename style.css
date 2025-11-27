@@ -393,6 +393,16 @@ footer a:hover {
     font-weight: normal;
 }
 
+/* Estilos para actividades completadas */
+.fc-event.completed {
+    opacity: 0.2;
+    text-decoration: line-through;
+}
+
+.fc-event.completed .fc-event-title {
+    text-decoration: line-through;
+}
+
 /* Dark theme adjustments for calendar */
 .dark-theme .fc .fc-toolbar-title {
     color: var(--text-color);
@@ -508,6 +518,37 @@ footer a:hover {
     margin: 0;
     color: var(--text-color);
     line-height: 1.5;
+}
+
+/* Estilos para el checkbox en el modal */
+.modal-checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+    background-color: var(--input-bg);
+    border-radius: 8px;
+    margin-top: 15px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.modal-checkbox-container:hover {
+    background-color: var(--border-color);
+}
+
+.modal-checkbox-container input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+}
+
+.modal-checkbox-container label {
+    cursor: pointer;
+    margin: 0;
+    font-weight: normal;
+    color: var(--text-color);
 }
 
 @keyframes fadeIn {

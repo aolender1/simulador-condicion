@@ -312,7 +312,7 @@ async function initializeSimulator() {
 }
 
 initializeSimulator();
-// Funci�n para inicializar el calendario
+// Función para inicializar el calendario
 function initializeCalendar() {
     const calendarEl = document.getElementById('calendar');
     const calendarMessage = document.getElementById('calendar-message');
@@ -322,6 +322,7 @@ function initializeCalendar() {
     const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         locale: 'es',
+        timeZone: 'America/Argentina/Buenos_Aires',
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
@@ -333,26 +334,43 @@ function initializeCalendar() {
             list: 'Lista'
         },
         events: function (info, successCallback, failureCallback) {
-            // URL de tu Google Sheet publicado como CSV
             const GOOGLE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHniUNfOA8JTrnlzovWRIoD_VFprq9UL10Yhbqx4eSuf_fwiO5RFORoL8kluvUPLwNJpZZWnsb_1ri/pub?gid=0&single=true&output=csv';
 
             Papa.parse(GOOGLE_SHEET_URL, {
                 download: true,
                 header: true,
+                skipEmptyLines: true,
                 complete: function (results) {
                     console.log('Datos cargados:', results.data);
+
+                    const completedActivities = getCompletedActivities();
+
                     const events = results.data
-                        .filter(row => row.title && row.title.trim() !== '' && row.start && row.start.trim() !== '') // Filtrar filas vac�as
-                        .map(row => ({
-                            title: row.Materia ? `${row.Materia}: ${row.title}` : row.title,
-                            start: row.start,
-                            end: row.end || null,
-                            color: row.color || null,
-                            extendedProps: {
-                                materia: row.Materia || '',
-                                originalTitle: row.title
-                            }
-                        }));
+                        .filter(row => row.title && row.start)
+                        .map(row => {
+                            const start = row.start ? row.start.trim() : null;
+                            const end = row.end ? row.end.trim() : null;
+                            const materia = row.Materia ? row.Materia.trim() : '';
+                            const title = row.title.trim();
+
+                            const eventId = `${materia}-${title}-${start}`;
+                            const isCompleted = completedActivities[eventId] === true;
+
+                            return {
+                                id: eventId,
+                                title: materia ? `${materia}: ${title}` : title,
+                                start: start,
+                                end: end || null,
+                                color: row.color ? row.color.trim() : null,
+                                allDay: !start.includes('T'),
+                                classNames: isCompleted ? ['completed'] : [],
+                                extendedProps: {
+                                    materia: materia,
+                                    originalTitle: title,
+                                    completed: isCompleted
+                                }
+                            };
+                        });
 
                     console.log('Eventos procesados:', events);
 
@@ -385,6 +403,8 @@ function initializeCalendar() {
             const title = info.event.extendedProps.originalTitle || info.event.title;
             const start = info.event.start;
             const end = info.event.end;
+            const eventId = info.event.id;
+            const isCompleted = info.event.extendedProps.completed || false;
 
             const formatDate = (date) => {
                 if (!date) return '';
@@ -411,6 +431,30 @@ function initializeCalendar() {
                 endContainer.style.display = 'none';
             }
 
+            // Configurar checkbox  
+            const checkbox = document.getElementById('completedCheckbox');
+            checkbox.checked = isCompleted;
+
+            // Remover listeners anteriores  
+            const newCheckbox = checkbox.cloneNode(true);
+            checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+
+            // Agregar nuevo listener  
+            newCheckbox.addEventListener('change', function () {
+                const checked = this.checked;
+                saveCompletedActivity(eventId, checked);
+
+                // Actualizar visualmente el evento  
+                if (checked) {
+                    info.el.classList.add('completed');
+                } else {
+                    info.el.classList.remove('completed');
+                }
+
+                // Actualizar el estado en el objeto del evento  
+                info.event.setExtendedProp('completed', checked);
+            });
+
             modal.style.display = 'block';
         }
     });
@@ -422,6 +466,32 @@ function initializeCalendar() {
 function closeModal() {
     const modal = document.getElementById('eventModal');
     modal.style.display = 'none';
+}
+
+// Funciones para manejar actividades completadas
+function getCompletedActivities() {
+    const completed = localStorage.getItem('completedActivities');
+    return completed ? JSON.parse(completed) : {};
+}
+
+function saveCompletedActivity(eventId, isCompleted) {
+    const completed = getCompletedActivities();
+    if (isCompleted) {
+        completed[eventId] = true;
+    } else {
+        delete completed[eventId];
+    }
+    localStorage.setItem('completedActivities', JSON.stringify(completed));
+}
+
+function isActivityCompleted(eventId) {
+    const completed = getCompletedActivities();
+    return completed[eventId] === true;
+}
+
+// Generar ID único para cada evento
+function generateEventId(event) {
+    return `${event.extendedProps.materia}-${event.extendedProps.originalTitle}-${event.start}`;
 }
 
 // Event listeners para cerrar el modal
