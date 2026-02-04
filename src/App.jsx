@@ -22,7 +22,7 @@ function App() {
           // Verificación de acceso con lista local
           const allowedEmails = [
             'albertolender@gmail.com',
-            'lynchjona1@gmail.com',
+            'lynchjonai@gmail.com',
             'maxipadilla.unsl@gmail.com',
             'supremacyaaa@gmail.com'
           ];
