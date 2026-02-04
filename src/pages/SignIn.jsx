@@ -3,9 +3,10 @@ import { authClient } from '../lib/auth';
 function SignIn() {
     const handleGoogleLogin = async () => {
         try {
+            const callbackUrl = `${window.location.origin}/admin`;
             await authClient.signIn.social({
                 provider: 'google',
-                callbackURL: '/admin',
+                callbackURL: callbackUrl,
             });
         } catch (error) {
             console.error('Error al iniciar sesión con Google:', error);
