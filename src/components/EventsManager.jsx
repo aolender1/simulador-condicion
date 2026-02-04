@@ -23,6 +23,7 @@ function EventsManager() {
   const [showModal, setShowModal] = useState(false)
   const [editingEvent, setEditingEvent] = useState(null)
   const [error, setError] = useState('')
+  const [modalError, setModalError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
   const [form, setForm] = useState({
     materia: MATERIAS[0],
@@ -105,6 +106,7 @@ function EventsManager() {
   }
 
   const openModal = (event = null) => {
+    setModalError('')  // Limpiar error del modal al abrir
     if (event) {
       setEditingEvent(event)
       // Convertir de UTC (guardado en DB) a hora local
@@ -152,6 +154,12 @@ function EventsManager() {
     const startLocal = new Date(`${form.start_date}T${form.start_time}:00`)
     const endLocal = new Date(`${form.end_date}T${form.end_time}:00`)
 
+    // Validar que la fecha de inicio sea anterior a la fecha de fin
+    if (startLocal >= endLocal) {
+      setModalError('La fecha y hora de inicio debe ser anterior a la fecha y hora de fin')
+      return
+    }
+
     // Convertir a ISO string (UTC) para guardar en la DB
     const start_date = startLocal.toISOString()
     const end_date = endLocal.toISOString()
@@ -185,11 +193,12 @@ function EventsManager() {
       setShowModal(false)
       resetForm()
       setError('')
+      setModalError('')
       setSuccessMessage(editingEvent ? 'Evento actualizado correctamente' : 'Evento creado correctamente')
       fetchEvents()
     } catch (err) {
       console.error(err)
-      setError(err.message)
+      setModalError(err.message)
     }
   }
 
@@ -325,10 +334,11 @@ function EventsManager() {
       </div>
 
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+        <div className="modal-overlay" onClick={() => { setShowModal(false); setModalError(''); }}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <span className="modal-close" onClick={() => setShowModal(false)}>×</span>
+            <span className="modal-close" onClick={() => { setShowModal(false); setModalError(''); }}>×</span>
             <h2>{editingEvent ? 'Editar Evento' : 'Nuevo Evento'}</h2>
+            {modalError && <div className="error-message" style={{ marginBottom: '1rem' }}>{modalError}</div>}
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label>Materia</label>
@@ -396,7 +406,7 @@ function EventsManager() {
                 </div>
               </div>
               <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
+                <button type="button" className="btn btn-secondary" onClick={() => { setShowModal(false); setModalError(''); }}>
                   Cancelar
                 </button>
                 <button type="submit" className="btn btn-primary">
