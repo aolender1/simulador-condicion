@@ -113,6 +113,12 @@ function Calendar() {
           >
             📚 Correlatividades
           </button>
+          <button
+            className={`sidebar-btn ${viewMode === 'calculadora' ? 'active' : ''}`}
+            onClick={() => setViewMode('calculadora')}
+          >
+            🧮 Calculadora de Condición
+          </button>
           <a
             href="https://www.unsl.edu.ar/carpeta/Calendario2026-3.jpg"
             target="_blank"
@@ -124,7 +130,7 @@ function Calendar() {
         </aside>
 
         <div className="app-content">
-          {viewMode === 'calendar' ? (
+          {viewMode === 'calendar' && (
             <>
               <section className="calendar-section" style={{ padding: 0 }}>
                 <div className="calendar-container">
@@ -176,12 +182,12 @@ function Calendar() {
                   />
                 </div>
               </section>
-
-              <Calculadora />
             </>
-          ) : (
-            <StudyPlan />
           )}
+
+          {viewMode === 'studyplan' && <StudyPlan />}
+
+          {viewMode === 'calculadora' && <Calculadora />}
         </div>
       </div>
 

@@ -270,6 +270,9 @@ function EventsManager() {
 
   if (loading) return <div className="loading">Cargando...</div>
 
+  const today = new Date();
+  const minDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
@@ -363,6 +366,8 @@ function EventsManager() {
                   value={form.start_date}
                   onChange={e => setForm({ ...form, start_date: e.target.value })}
                   required
+                  min={minDate}
+                  max="2029-12-31"
                 />
               </div>
               <div className="form-group">
@@ -381,6 +386,8 @@ function EventsManager() {
                   value={form.end_date}
                   onChange={e => setForm({ ...form, end_date: e.target.value })}
                   required
+                  min={minDate}
+                  max="2029-12-31"
                 />
               </div>
               <div className="form-group">

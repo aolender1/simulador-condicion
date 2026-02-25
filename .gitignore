@@ -4,3 +4,4 @@ dist
 .env.local
 *.log
 .vercel
+vite.config.js.timestamp-1771983883415-fc41f50e53c18.mjs
