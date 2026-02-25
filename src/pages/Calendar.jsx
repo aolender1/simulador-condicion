@@ -6,11 +6,14 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import listPlugin from '@fullcalendar/list'
 import esLocale from '@fullcalendar/core/locales/es'
 import Calculadora from '../components/Calculadora'
+import StudyPlan from '../components/StudyPlan'
+import '../StudyPlan.css'
 
 function Calendar() {
   const [events, setEvents] = useState([])
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark')
   const [selectedEvent, setSelectedEvent] = useState(null)
+  const [viewMode, setViewMode] = useState('calendar')
   const [completedEvents, setCompletedEvents] = useState(() => {
     const saved = localStorage.getItem('completedEvents')
     return saved ? JSON.parse(saved) : []
@@ -87,7 +90,7 @@ function Calendar() {
   }
 
   return (
-    <>
+    <div className="app-wrapper">
       <header>
         <h1>Cronograma y Simulador de Condicion para la Licenciatura en Analisis y Gestion de Datos</h1>
         <div className="header-actions">
@@ -96,58 +99,91 @@ function Calendar() {
         </div>
       </header>
 
-      <section className="calendar-section">
-        <div className="calendar-container">
-          <h3>Calendario de Eventos</h3>
-          <FullCalendar
-            plugins={[dayGridPlugin, timeGridPlugin, listPlugin]}
-            initialView="dayGridMonth"
-            locale={esLocale}
-            timeZone="local"
-            headerToolbar={{
-              left: 'prev,next today',
-              center: 'title',
-              right: 'dayGridMonth,timeGridWeek,listMonth'
-            }}
-            buttonText={{
-              today: 'Hoy',
-              month: 'Mes',
-              week: 'Semana',
-              list: 'Agenda',
-              prev: '◀',
-              next: '▶'
-            }}
-            events={events}
-            eventClick={handleEventClick}
-            eventClassNames={(arg) =>
-              completedEvents.includes(arg.event.id) ? ['completed'] : []
-            }
-            eventContent={(arg) => {
-              let time = '';
-              if (arg.event.start) {
-                time = new Date(arg.event.start).toLocaleTimeString('es-AR', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: false
-                });
-              }
-              return (
-                <div className="fc-event-main-frame" style={{ backgroundColor: arg.event.backgroundColor, borderColor: arg.event.borderColor, color: 'white', padding: '2px 4px', borderRadius: '3px', width: '100%', overflow: 'hidden' }}>
-                  {time && <div className="fc-event-time" style={{ fontWeight: 'bold', fontSize: '0.85em' }}>{time}</div>}
-                  <div className="fc-event-title-container" style={{ marginTop: '2px' }}>
-                    <div className="fc-event-title fc-sticky" style={{ fontSize: '0.9em', lineHeight: '1.3', whiteSpace: 'normal' }}>
-                      <strong>{arg.event.extendedProps.materia}</strong>: {arg.event.title}
-                    </div>
-                  </div>
-                </div>
-              );
-            }}
-            height="auto"
-          />
-        </div>
-      </section>
+      <div className="main-layout">
+        <aside className="app-sidebar">
+          <button
+            className={`sidebar-btn ${viewMode === 'calendar' ? 'active' : ''}`}
+            onClick={() => setViewMode('calendar')}
+          >
+            📅 Calendario de Eventos
+          </button>
+          <button
+            className={`sidebar-btn ${viewMode === 'studyplan' ? 'active' : ''}`}
+            onClick={() => setViewMode('studyplan')}
+          >
+            📚 Correlatividades
+          </button>
+          <a
+            href="https://www.unsl.edu.ar/carpeta/Calendario2026-3.jpg"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="sidebar-btn link-btn"
+          >
+            📆 Calendario Oficial 2026
+          </a>
+        </aside>
 
-      <Calculadora />
+        <div className="app-content">
+          {viewMode === 'calendar' ? (
+            <>
+              <section className="calendar-section" style={{ padding: 0 }}>
+                <div className="calendar-container">
+                  <h3>Calendario de Eventos</h3>
+                  <FullCalendar
+                    plugins={[dayGridPlugin, timeGridPlugin, listPlugin]}
+                    initialView="dayGridMonth"
+                    locale={esLocale}
+                    timeZone="local"
+                    headerToolbar={{
+                      left: 'prev,next today',
+                      center: 'title',
+                      right: 'dayGridMonth,timeGridWeek,listMonth'
+                    }}
+                    buttonText={{
+                      today: 'Hoy',
+                      month: 'Mes',
+                      week: 'Semana',
+                      list: 'Agenda',
+                      prev: '◀',
+                      next: '▶'
+                    }}
+                    events={events}
+                    eventClick={handleEventClick}
+                    eventClassNames={(arg) =>
+                      completedEvents.includes(arg.event.id) ? ['completed'] : []
+                    }
+                    eventContent={(arg) => {
+                      let time = '';
+                      if (arg.event.start) {
+                        time = new Date(arg.event.start).toLocaleTimeString('es-AR', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: false
+                        });
+                      }
+                      return (
+                        <div className="fc-event-main-frame" style={{ backgroundColor: arg.event.backgroundColor, borderColor: arg.event.borderColor, color: 'white', padding: '2px 4px', borderRadius: '3px', width: '100%', overflow: 'hidden' }}>
+                          {time && <div className="fc-event-time" style={{ fontWeight: 'bold', fontSize: '0.85em' }}>{time}</div>}
+                          <div className="fc-event-title-container" style={{ marginTop: '2px' }}>
+                            <div className="fc-event-title fc-sticky" style={{ fontSize: '0.9em', lineHeight: '1.3', whiteSpace: 'normal' }}>
+                              <strong>{arg.event.extendedProps.materia}</strong>: {arg.event.title}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }}
+                    height="auto"
+                  />
+                </div>
+              </section>
+
+              <Calculadora />
+            </>
+          ) : (
+            <StudyPlan />
+          )}
+        </div>
+      </div>
 
       {selectedEvent && (
         <div className="modal-overlay" onClick={() => setSelectedEvent(null)}>
@@ -191,7 +227,7 @@ function Calendar() {
           Desarrollado por <a href="https://github.com/aolender1" target="_blank" rel="noopener noreferrer">Alberto Olender</a>
         </p>
       </footer>
-    </>
+    </div>
   )
 }
 

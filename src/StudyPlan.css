@@ -1,0 +1,428 @@
+/* Contenedor Principal del Plan */
+.study-plan-container {
+    background-color: var(--container-bg);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px var(--shadow-color);
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.study-plan-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.study-plan-header h2 {
+    color: var(--primary-color);
+    margin-bottom: 5px;
+    font-size: 1.8em;
+}
+
+.study-plan-header p {
+    color: var(--text-color);
+    opacity: 0.8;
+}
+
+/* Leyenda e Instrucciones */
+.study-legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+.dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.dot.aprobada {
+    background-color: #2e7d32;
+}
+
+.dot.regular {
+    background-color: #f57f17;
+}
+
+.dot.habilitada {
+    background-color: #1976d2;
+    box-shadow: 0 0 10px rgba(25, 118, 210, 0.6);
+}
+
+.dot.bloqueada {
+    background-color: #a0a0a0;
+}
+
+.instruction-box {
+    background-color: var(--input-bg);
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-color);
+    margin-bottom: 30px;
+    font-size: 0.9em;
+}
+
+.instruction-box p {
+    margin: 5px 0 0 0;
+}
+
+/* Grilla del Plan de Estudios */
+.study-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.study-year {
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+}
+
+.year-title {
+    background-color: var(--input-bg);
+    padding: 12px 20px;
+    font-weight: bold;
+    font-size: 1.2em;
+    color: var(--primary-color);
+    border-bottom: 1px solid var(--border-color);
+    border-radius: 9px 9px 0 0;
+}
+
+.study-terms {
+    display: flex;
+    flex-direction: column;
+}
+
+@media (min-width: 900px) {
+    .study-terms {
+        flex-direction: row;
+    }
+}
+
+.study-term {
+    flex: 1;
+    padding: 20px;
+}
+
+.study-term:first-child {
+    border-bottom: 1px solid var(--border-color);
+}
+
+@media (min-width: 900px) {
+    .study-term:first-child {
+        border-bottom: none;
+        border-right: 1px solid var(--border-color);
+    }
+}
+
+.term-title {
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: var(--text-color);
+    opacity: 0.8;
+}
+
+.subjects-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Tarjetas de Materias */
+.subject-card {
+    padding: 12px 15px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid var(--border-color);
+    user-select: none;
+    position: relative;
+    background-color: var(--container-bg);
+}
+
+.subject-card:hover {
+    z-index: 10;
+}
+
+.subject-id-badge {
+    background-color: rgba(0, 0, 0, 0.1);
+    color: var(--text-color);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: bold;
+    min-width: 32px;
+    text-align: center;
+}
+
+.dark-theme .subject-id-badge {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.subject-name {
+    font-weight: 500;
+    line-height: 1.2;
+    flex-grow: 1;
+}
+
+/* Boton de Enlace (Link) en la tarjeta */
+.subject-link-container {
+    margin-left: 'auto';
+    display: flex;
+    align-items: center;
+}
+
+.subject-link-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--input-bg);
+    color: var(--primary-color);
+    padding: 6px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+}
+
+.subject-link-btn:hover {
+    background-color: var(--primary-color);
+    color: white;
+    transform: scale(1.1);
+}
+
+/* Estados de la Tarjeta */
+.status-bloqueada {
+    opacity: 0.6;
+    border-left: 5px solid #a0a0a0;
+    cursor: not-allowed;
+}
+
+.status-bloqueada:hover {
+    opacity: 0.8;
+    background-color: var(--input-bg);
+}
+
+.status-habilitada {
+    border-left: 5px solid #1976d2;
+    background-color: rgba(25, 118, 210, 0.05);
+    box-shadow: 0 0 10px rgba(25, 118, 210, 0.15);
+    transform: translateY(-2px);
+}
+
+.dark-theme .status-habilitada {
+    background-color: rgba(66, 165, 245, 0.1);
+}
+
+.status-habilitada:hover {
+    background-color: rgba(25, 118, 210, 0.1);
+    box-shadow: 0 0 15px rgba(25, 118, 210, 0.3);
+}
+
+.status-regular {
+    border-left: 5px solid #f57f17;
+    background-color: rgba(245, 127, 23, 0.05);
+}
+
+.dark-theme .status-regular {
+    background-color: rgba(245, 127, 23, 0.1);
+}
+
+.status-regular:hover {
+    background-color: rgba(245, 127, 23, 0.1);
+}
+
+.status-aprobada {
+    border-left: 5px solid #2e7d32;
+    background-color: rgba(46, 125, 50, 0.05);
+}
+
+.dark-theme .status-aprobada {
+    background-color: rgba(76, 175, 80, 0.1);
+}
+
+.status-aprobada:hover {
+    background-color: rgba(46, 125, 50, 0.1);
+}
+
+/* Tooltips para materias bloqueadas */
+.subject-tooltip {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(33, 33, 33, 0.95);
+    color: #fff;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 0.85em;
+    min-width: 250px;
+    z-index: 100;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+    line-height: 1.4;
+}
+
+.subject-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: rgba(33, 33, 33, 0.95) transparent transparent transparent;
+}
+
+.subject-tooltip strong {
+    display: block;
+    margin-bottom: 5px;
+    color: #90caf9;
+}
+
+.subject-tooltip ul {
+    margin: 0;
+    padding-left: 15px;
+    list-style-type: disc;
+}
+
+.subject-card.status-bloqueada:hover .subject-tooltip {
+    display: block;
+    animation: fadeInTooltip 0.2s ease-in-out;
+}
+
+@keyframes fadeInTooltip {
+    from {
+        opacity: 0;
+        transform: translate(-50%, 5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
+/* Sidebar y Layout Principal (Añadido aquí para no recargar index.css mucho) */
+.app-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.main-layout {
+    display: flex;
+    flex: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 20px;
+    gap: 20px;
+}
+
+.app-sidebar {
+    width: 280px;
+    background-color: var(--container-bg);
+    border-radius: 12px;
+    box-shadow: 0 2px 10px var(--shadow-color);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    flex-shrink: 0;
+    align-self: flex-start;
+    position: sticky;
+    top: 20px;
+}
+
+.sidebar-btn {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 14px 15px;
+    background-color: transparent;
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.95em;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 0;
+    width: 100%;
+}
+
+.sidebar-btn:hover {
+    background-color: var(--input-bg);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.sidebar-btn.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.sidebar-btn.link-btn {
+    justify-content: center;
+    background-color: #f0f4f8;
+    color: #1976d2;
+    border-color: #b3d4fc;
+}
+
+.dark-theme .sidebar-btn.link-btn {
+    background-color: #1a2533;
+    color: #90caf9;
+    border-color: #0c3866;
+}
+
+.sidebar-btn.link-btn:hover {
+    background-color: #e3f2fd;
+    transform: translateY(-2px);
+}
+
+.app-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 20px;
+}
+
+@media (max-width: 900px) {
+    .main-layout {
+        flex-direction: column;
+    }
+
+    .app-sidebar {
+        width: 100%;
+        position: static;
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .sidebar-btn {
+        flex: 1;
+        min-width: 200px;
+    }
+}
