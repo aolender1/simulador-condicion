@@ -123,23 +123,24 @@ function Calendar() {
               completedEvents.includes(arg.event.id) ? ['completed'] : []
             }
             eventContent={(arg) => {
-              const time = new Date(arg.event.start).toLocaleTimeString('es-AR', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
-              });
-              return {
-                html: `
-                  <div class="fc-event-main-frame" style="background-color: ${arg.event.backgroundColor}; border-color: ${arg.event.borderColor}; color: white; padding: 2px 4px; border-radius: 3px;">
-                    <div class="fc-event-time" style="font-weight: bold; font-size: 0.85em;">${time}</div>
-                    <div class="fc-event-title-container" style="margin-top: 2px;">
-                      <div class="fc-event-title fc-sticky" style="font-size: 0.9em; line-height: 1.3;">
-                        <strong>${arg.event.extendedProps.materia}</strong>: ${arg.event.title}
-                      </div>
+              let time = '';
+              if (arg.event.start) {
+                time = new Date(arg.event.start).toLocaleTimeString('es-AR', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: false
+                });
+              }
+              return (
+                <div className="fc-event-main-frame" style={{ backgroundColor: arg.event.backgroundColor, borderColor: arg.event.borderColor, color: 'white', padding: '2px 4px', borderRadius: '3px', width: '100%', overflow: 'hidden' }}>
+                  {time && <div className="fc-event-time" style={{ fontWeight: 'bold', fontSize: '0.85em' }}>{time}</div>}
+                  <div className="fc-event-title-container" style={{ marginTop: '2px' }}>
+                    <div className="fc-event-title fc-sticky" style={{ fontSize: '0.9em', lineHeight: '1.3', whiteSpace: 'normal' }}>
+                      <strong>{arg.event.extendedProps.materia}</strong>: {arg.event.title}
                     </div>
                   </div>
-                `
-              };
+                </div>
+              );
             }}
             height="auto"
           />
