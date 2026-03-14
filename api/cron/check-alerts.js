@@ -35,12 +35,14 @@ export default async function handler(req, res) {
     const emails = mails.map(m => m.email)
     let sentCount = 0
 
+    const fromAddress = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+
     for (const event of events) {
       const startDate = new Date(event.start_date).toLocaleString('es-AR')
       const hoursUntil = Math.round((new Date(event.start_date) - now) / (1000 * 60 * 60))
 
       await resend.emails.send({
-        from: 'Calendario UNSL <onboarding@resend.dev>',
+        from: `Calendario UNSL <${fromAddress}>`,
         to: emails,
         subject: `[RECORDATORIO ${hoursUntil}h] ${event.materia}: ${event.title}`,
         html: `
