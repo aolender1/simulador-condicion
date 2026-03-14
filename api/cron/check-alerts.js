@@ -38,7 +38,7 @@ export default async function handler(req, res) {
     const fromAddress = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
 
     for (const event of events) {
-      const startDate = new Date(event.start_date).toLocaleString('es-AR')
+      const startDate = new Date(event.start_date).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' })
       const hoursUntil = Math.round((new Date(event.start_date) - now) / (1000 * 60 * 60))
 
       const emailSubject = `[RECORDATORIO ${hoursUntil}h] ${event.materia}: ${event.title}`
