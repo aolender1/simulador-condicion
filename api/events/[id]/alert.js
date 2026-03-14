@@ -39,8 +39,10 @@ export default async function handler(req, res) {
     const emails = mails.map(m => m.email)
     const startDate = new Date(event.start_date).toLocaleString('es-AR')
 
+    const fromAddress = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+
     await resend.emails.send({
-      from: 'Calendario UNSL <onboarding@resend.dev>',
+      from: `Calendario UNSL <${fromAddress}>`,
       to: emails,
       subject: `[ALERTA] ${event.materia}: ${event.title}`,
       html: `
