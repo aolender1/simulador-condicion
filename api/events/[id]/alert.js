@@ -40,12 +40,8 @@ export default async function handler(req, res) {
     const startDate = new Date(event.start_date).toLocaleString('es-AR')
 
     const fromAddress = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
-
-    await resend.emails.send({
-      from: `Calendario UNSL <${fromAddress}>`,
-      to: emails,
-      subject: `[ALERTA] ${event.materia}: ${event.title}`,
-      html: `
+    const emailSubject = `[ALERTA] ${event.materia}: ${event.title}`
+    const emailHtml = `
         <h2>Recordatorio de Evento</h2>
         <p><strong>Materia:</strong> ${event.materia}</p>
         <p><strong>Evento:</strong> ${event.title}</p>
@@ -53,7 +49,15 @@ export default async function handler(req, res) {
         <hr>
         <p>Calendario UNSL</p>
       `
-    })
+
+    for (const email of emails) {
+      await resend.emails.send({
+        from: `Calendario UNSL <${fromAddress}>`,
+        to: email,
+        subject: emailSubject,
+        html: emailHtml
+      })
+    }
 
     await sql`UPDATE events SET alert_status = 'sent' WHERE id = ${id}`
 

@@ -174,7 +174,7 @@ app.post('/api/events/:id/alert', verifyAdmin, async (req, res) => {
 
     // Intentar enviar el email
     const emailResult = await resend.emails.send({
-      from: 'Calendario UNSL <onboarding@resend.dev>',
+      from: `Calendario UNSL <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
       to: contacts.map(c => c.email),
       subject: `Recordatorio: ${event.title}`,
       html: `
