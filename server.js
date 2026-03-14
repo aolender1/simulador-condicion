@@ -172,12 +172,10 @@ app.post('/api/events/:id/alert', verifyAdmin, async (req, res) => {
 
     const startDate = new Date(event.start_date).toLocaleString('es-AR');
 
-    // Intentar enviar el email
-    const emailResult = await resend.emails.send({
-      from: `Calendario UNSL <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
-      to: contacts.map(c => c.email),
-      subject: `Recordatorio: ${event.title}`,
-      html: `
+    // Enviar email individual a cada contacto para no exponer los demás destinatarios
+    const fromAddress = `Calendario UNSL <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`;
+    const emailSubject = `Recordatorio: ${event.title}`;
+    const emailHtml = `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #00796b;">${event.materia}</h2>
           <p><strong>${event.title}</strong></p>
@@ -185,8 +183,16 @@ app.post('/api/events/:id/alert', verifyAdmin, async (req, res) => {
           <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
           <p style="color: #666; font-size: 12px;">Este es un recordatorio automático del Calendario UNSL.</p>
         </div>
-      `
-    });
+      `;
+    for (const contact of contacts) {
+      await resend.emails.send({
+        from: fromAddress,
+        to: contact.email,
+        subject: emailSubject,
+        html: emailHtml
+      });
+    }
+    const emailResult = { sent: contacts.length };
 
     console.log('Email enviado:', emailResult);
 

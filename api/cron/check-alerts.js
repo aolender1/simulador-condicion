@@ -41,11 +41,8 @@ export default async function handler(req, res) {
       const startDate = new Date(event.start_date).toLocaleString('es-AR')
       const hoursUntil = Math.round((new Date(event.start_date) - now) / (1000 * 60 * 60))
 
-      await resend.emails.send({
-        from: `Calendario UNSL <${fromAddress}>`,
-        to: emails,
-        subject: `[RECORDATORIO ${hoursUntil}h] ${event.materia}: ${event.title}`,
-        html: `
+      const emailSubject = `[RECORDATORIO ${hoursUntil}h] ${event.materia}: ${event.title}`
+      const emailHtml = `
           <h2>Recordatorio de Evento</h2>
           <p><strong>Faltan aproximadamente ${hoursUntil} horas</strong></p>
           <p><strong>Materia:</strong> ${event.materia}</p>
@@ -54,7 +51,15 @@ export default async function handler(req, res) {
           <hr>
           <p>Calendario UNSL</p>
         `
-      })
+
+      for (const email of emails) {
+        await resend.emails.send({
+          from: `Calendario UNSL <${fromAddress}>`,
+          to: email,
+          subject: emailSubject,
+          html: emailHtml
+        })
+      }
 
       await sql`UPDATE events SET alert_status = 'sent' WHERE id = ${event.id}`
       sentCount++
