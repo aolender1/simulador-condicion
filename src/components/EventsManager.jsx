@@ -9,7 +9,8 @@ const MATERIAS = [
   'Tecnicas de Muestreo',
   'Taller Integrador I',
   'Modelos No Parametricos',
-  'Calculo II'
+  'Calculo II',
+  'AVISO IMPORTANTE'
 ]
 
 const COLORS = [
