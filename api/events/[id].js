@@ -28,8 +28,8 @@ export default async function handler(req, res) {
             end_date = ${end_date}, color = ${color}, alert_status = ${alert_status},
             alert_email = ${alert_email !== undefined ? alert_email : true},
             alert_whatsapp = ${alert_whatsapp !== undefined ? alert_whatsapp : false},
-            alert_hours_email = ${JSON.stringify(alert_hours_email || [24])},
-            alert_hours_whatsapp = ${JSON.stringify(alert_hours_whatsapp || [2])}
+            alert_hours_email = ${alert_hours_email || [24]},
+            alert_hours_whatsapp = ${alert_hours_whatsapp || [2]}
         WHERE id = ${id}
         RETURNING *
       `

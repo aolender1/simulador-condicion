@@ -71,8 +71,8 @@ function apiPlugin() {
               ${alert_status || 'pending'},
               ${alert_email !== undefined ? alert_email : true},
               ${alert_whatsapp !== undefined ? alert_whatsapp : false},
-              ${JSON.stringify(alert_hours_email || [24])},
-              ${JSON.stringify(alert_hours_whatsapp || [2])})
+              ${alert_hours_email || [24]},
+              ${alert_hours_whatsapp || [2]})
             RETURNING *`
           res.json(result[0])
         } catch (e) { console.error(e); res.status(500).json({ error: 'Error del servidor' }) }
@@ -87,8 +87,8 @@ function apiPlugin() {
               end_date = ${end_date}, color = ${color}, alert_status = ${alert_status},
               alert_email = ${alert_email !== undefined ? alert_email : true},
               alert_whatsapp = ${alert_whatsapp !== undefined ? alert_whatsapp : false},
-              alert_hours_email = ${JSON.stringify(alert_hours_email || [24])},
-              alert_hours_whatsapp = ${JSON.stringify(alert_hours_whatsapp || [2])}
+              alert_hours_email = ${alert_hours_email || [24]},
+              alert_hours_whatsapp = ${alert_hours_whatsapp || [2]}
             WHERE id = ${req.params.id} RETURNING *`
           res.json(result[0])
         } catch (e) { console.error(e); res.status(500).json({ error: 'Error del servidor' }) }

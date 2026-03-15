@@ -38,8 +38,8 @@ export default async function handler(req, res) {
           ${alert_status || 'pending'},
           ${alert_email !== undefined ? alert_email : true},
           ${alert_whatsapp !== undefined ? alert_whatsapp : false},
-          ${JSON.stringify(alert_hours_email || [24])},
-          ${JSON.stringify(alert_hours_whatsapp || [2])}
+          ${alert_hours_email || [24]},
+          ${alert_hours_whatsapp || [2]}
         )
         RETURNING *
       `
