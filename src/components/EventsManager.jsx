@@ -472,22 +472,15 @@ function EventsManager() {
                         {[1, 2, 6, 12, 24, 48].map(h => (
                           <label key={h} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontWeight: 'normal', cursor: 'pointer', fontSize: '0.9rem' }}>
                             <input
-                              type="checkbox"
-                              checked={form.alert_hours_email.includes(h)}
-                              onChange={e => {
-                                const updated = e.target.checked
-                                  ? [...form.alert_hours_email, h].sort((a, b) => a - b)
-                                  : form.alert_hours_email.filter(x => x !== h)
-                                setForm({ ...form, alert_hours_email: updated })
-                              }}
+                              type="radio"
+                              name="alert_hours_email"
+                              checked={form.alert_hours_email[0] === h}
+                              onChange={() => setForm({ ...form, alert_hours_email: [h] })}
                             />
                             {h}h
                           </label>
                         ))}
                       </div>
-                      {form.alert_hours_email.length === 0 && (
-                        <p style={{ color: '#dc3545', fontSize: '0.8rem', marginTop: '0.3rem' }}>Seleccioná al menos una hora.</p>
-                      )}
                     </div>
                   )}
                 </div>
@@ -509,22 +502,15 @@ function EventsManager() {
                         {[1, 2, 6, 12, 24, 48].map(h => (
                           <label key={h} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontWeight: 'normal', cursor: 'pointer', fontSize: '0.9rem' }}>
                             <input
-                              type="checkbox"
-                              checked={form.alert_hours_whatsapp.includes(h)}
-                              onChange={e => {
-                                const updated = e.target.checked
-                                  ? [...form.alert_hours_whatsapp, h].sort((a, b) => a - b)
-                                  : form.alert_hours_whatsapp.filter(x => x !== h)
-                                setForm({ ...form, alert_hours_whatsapp: updated })
-                              }}
+                              type="radio"
+                              name="alert_hours_whatsapp"
+                              checked={form.alert_hours_whatsapp[0] === h}
+                              onChange={() => setForm({ ...form, alert_hours_whatsapp: [h] })}
                             />
                             {h}h
                           </label>
                         ))}
                       </div>
-                      {form.alert_hours_whatsapp.length === 0 && (
-                        <p style={{ color: '#dc3545', fontSize: '0.8rem', marginTop: '0.3rem' }}>Seleccioná al menos una hora.</p>
-                      )}
                     </div>
                   )}
                 </div>
