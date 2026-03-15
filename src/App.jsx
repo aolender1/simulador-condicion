@@ -11,6 +11,13 @@ function App() {
   const [isEmailAllowed, setIsEmailAllowed] = useState(false);
   const navigate = useNavigate();
 
+  const devLogin = () => {
+    const devUser = { name: 'Dev Admin', email: 'albertolender@gmail.com' };
+    setUser(devUser);
+    setIsEmailAllowed(true);
+    navigate('/admin');
+  };
+
   useEffect(() => {
     // Verificar sesión al cargar
     const checkSession = async () => {
@@ -79,7 +86,7 @@ function App() {
       <Route path="/" element={<Calendar />} />
       <Route
         path="/login"
-        element={user ? <Navigate to="/admin" /> : <SignIn />}
+        element={user ? <Navigate to="/admin" /> : <SignIn onDevLogin={import.meta.env.DEV ? devLogin : null} />}
       />
       <Route
         path="/admin/*"

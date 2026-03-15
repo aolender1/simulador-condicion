@@ -1,6 +1,6 @@
 import { authClient } from '../lib/auth';
 
-function SignIn() {
+function SignIn({ onDevLogin }) {
     const handleGoogleLogin = async () => {
         try {
             const callbackUrl = `${window.location.origin}/admin`;
@@ -58,6 +58,26 @@ function SignIn() {
                     </svg>
                     Continuar con Google
                 </button>
+
+                {onDevLogin && (
+                    <button
+                        onClick={onDevLogin}
+                        style={{
+                            marginTop: '12px',
+                            width: '100%',
+                            padding: '10px 24px',
+                            backgroundColor: '#1a1a2e',
+                            color: '#fff',
+                            border: '1px dashed #555',
+                            borderRadius: '8px',
+                            fontSize: '14px',
+                            cursor: 'pointer',
+                            opacity: 0.8,
+                        }}
+                    >
+                        Entrar como Admin (solo dev)
+                    </button>
+                )}
             </div>
         </div>
     );
