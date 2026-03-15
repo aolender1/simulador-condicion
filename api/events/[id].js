@@ -19,13 +19,16 @@ export default async function handler(req, res) {
   if (!user) return res.status(401).json({ error: 'No autorizado' })
 
   if (req.method === 'PUT') {
-    const { materia, title, start_date, end_date, color, alert_status } = req.body
+    const { materia, title, start_date, end_date, color, alert_status, alert_email, alert_whatsapp, alert_hours } = req.body
 
     try {
       const result = await sql`
         UPDATE events 
         SET materia = ${materia}, title = ${title}, start_date = ${start_date}, 
-            end_date = ${end_date}, color = ${color}, alert_status = ${alert_status}
+            end_date = ${end_date}, color = ${color}, alert_status = ${alert_status},
+            alert_email = ${alert_email !== undefined ? alert_email : true},
+            alert_whatsapp = ${alert_whatsapp !== undefined ? alert_whatsapp : false},
+            alert_hours = ${JSON.stringify(alert_hours || [2, 24])}
         WHERE id = ${id}
         RETURNING *
       `

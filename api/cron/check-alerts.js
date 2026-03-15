@@ -60,20 +60,30 @@ export default async function handler(req, res) {
 
   try {
     const now = new Date()
-    const in2Hours = new Date(now.getTime() + 2 * 60 * 60 * 1000)
-    const in24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000)
 
-    const events = await sql`
+    // Fetch all pending events
+    const allPending = await sql`
       SELECT * FROM events 
       WHERE alert_status = 'pending' 
-      AND (
-        (start_date BETWEEN ${now.toISOString()} AND ${in2Hours.toISOString()})
-        OR (start_date BETWEEN ${now.toISOString()} AND ${in24Hours.toISOString()})
-      )
+      AND start_date > ${now.toISOString()}
     `
 
-    if (events.length === 0) {
+    if (allPending.length === 0) {
       return res.json({ message: 'No hay eventos próximos', sent: 0 })
+    }
+
+    // Filter events that fall within any of their configured alert windows
+    const events = allPending.filter(event => {
+      const hoursConfig = Array.isArray(event.alert_hours) && event.alert_hours.length > 0
+        ? event.alert_hours
+        : [2, 24]
+      const msUntil = new Date(event.start_date) - now
+      const hoursUntilEvent = msUntil / (1000 * 60 * 60)
+      return hoursConfig.some(h => hoursUntilEvent <= h && hoursUntilEvent > 0)
+    })
+
+    if (events.length === 0) {
+      return res.json({ message: 'No hay eventos dentro de las ventanas de alerta', sent: 0 })
     }
 
     const mails = await sql`SELECT email FROM mails`
@@ -100,9 +110,13 @@ export default async function handler(req, res) {
       })
       const hoursUntil = Math.round((eventDate - now) / (1000 * 60 * 60))
 
+      const sendEmail = event.alert_email !== false
+      const sendWhatsApp = event.alert_whatsapp === true
+
       // --- Email ---
-      const emailSubject = `[RECORDATORIO ${hoursUntil}h] ${event.materia}: ${event.title}`
-      const emailHtml = `
+      if (sendEmail && emails.length > 0) {
+        const emailSubject = `[RECORDATORIO ${hoursUntil}h] ${event.materia}: ${event.title}`
+        const emailHtml = `
           <h2>Recordatorio de Evento</h2>
           <p><strong>Faltan aproximadamente ${hoursUntil} horas</strong></p>
           <p><strong>Materia:</strong> ${event.materia}</p>
@@ -111,33 +125,34 @@ export default async function handler(req, res) {
           <hr>
           <p>Calendario UNSL</p>
         `
-
-      for (const email of emails) {
-        try {
-          await resend.emails.send({
-            from: `Calendario UNSL <${fromAddress}>`,
-            to: email,
-            subject: emailSubject,
-            html: emailHtml
-          })
-          results.push({ type: 'email', to: email, status: 'sent' })
-        } catch (err) {
-          results.push({ type: 'email', to: email, status: 'error', error: err.message })
+        for (const email of emails) {
+          try {
+            await resend.emails.send({
+              from: `Calendario UNSL <${fromAddress}>`,
+              to: email,
+              subject: emailSubject,
+              html: emailHtml
+            })
+            results.push({ type: 'email', to: email, status: 'sent' })
+          } catch (err) {
+            results.push({ type: 'email', to: email, status: 'error', error: err.message })
+          }
         }
       }
 
       // --- WhatsApp ---
-      // Template parameters: {{1}} = title, {{2}} = date, {{3}} = time
-      for (const contact of contacts) {
-        try {
-          await sendWhatsAppMessage(contact.phone, whatsappTemplateName, [
-            event.title,
-            startDateOnly,
-            startTimeOnly
-          ])
-          results.push({ type: 'whatsapp', to: contact.phone, status: 'sent' })
-        } catch (err) {
-          results.push({ type: 'whatsapp', to: contact.phone, status: 'error', error: err.message })
+      if (sendWhatsApp && contacts.length > 0) {
+        for (const contact of contacts) {
+          try {
+            await sendWhatsAppMessage(contact.phone, whatsappTemplateName, [
+              event.title,
+              startDateOnly,
+              startTimeOnly
+            ])
+            results.push({ type: 'whatsapp', to: contact.phone, status: 'sent' })
+          } catch (err) {
+            results.push({ type: 'whatsapp', to: contact.phone, status: 'error', error: err.message })
+          }
         }
       }
 

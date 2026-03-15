@@ -28,12 +28,18 @@ export default async function handler(req, res) {
     const user = verifyToken(req)
     if (!user) return res.status(401).json({ error: 'No autorizado' })
 
-    const { materia, title, start_date, end_date, color, alert_status } = req.body
+    const { materia, title, start_date, end_date, color, alert_status, alert_email, alert_whatsapp, alert_hours } = req.body
 
     try {
       const result = await sql`
-        INSERT INTO events (materia, title, start_date, end_date, color, alert_status)
-        VALUES (${materia}, ${title}, ${start_date}, ${end_date}, ${color}, ${alert_status || 'pending'})
+        INSERT INTO events (materia, title, start_date, end_date, color, alert_status, alert_email, alert_whatsapp, alert_hours)
+        VALUES (
+          ${materia}, ${title}, ${start_date}, ${end_date}, ${color},
+          ${alert_status || 'pending'},
+          ${alert_email !== undefined ? alert_email : true},
+          ${alert_whatsapp !== undefined ? alert_whatsapp : false},
+          ${JSON.stringify(alert_hours || [2, 24])}
+        )
         RETURNING *
       `
       return res.json(result[0])
