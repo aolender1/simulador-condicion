@@ -108,7 +108,8 @@ function EventsManager() {
       alert_status: 'pending',
       alert_email: true,
       alert_whatsapp: false,
-      alert_hours: [2, 24]
+      alert_hours_email: [24],
+      alert_hours_whatsapp: [2]
     })
     setEditingEvent(null)
   }

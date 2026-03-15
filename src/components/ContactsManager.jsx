@@ -149,7 +149,7 @@ function ContactsManager() {
     <div>
       <h1>Lista de Contactos</h1>
       <p style={{ marginBottom: '1.5rem', opacity: 0.7 }}>
-        Contactos para alertas por Email (Resend) y WhatsApp (CallMeBot)
+        Contactos para alertas por Email y WhatsApp
       </p>
 
       {error && <div className="error-message">{error}</div>}
