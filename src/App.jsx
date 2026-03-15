@@ -15,6 +15,7 @@ function App() {
     const devUser = { name: 'Dev Admin', email: 'albertolender@gmail.com' };
     setUser(devUser);
     setIsEmailAllowed(true);
+    setLoading(false);
     navigate('/admin');
   };
 
