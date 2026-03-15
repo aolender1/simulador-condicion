@@ -62,17 +62,25 @@ function apiPlugin() {
         } catch (e) { res.status(500).json({ error: 'Error del servidor' }) }
       })
 
+      const parseArr = (val, def) => {
+        if (!val) return def
+        if (Array.isArray(val)) return val
+        try { return JSON.parse(val) } catch { return def }
+      }
+
       app.post('/api/events', verifyAdmin, async (req, res) => {
         try {
           const { materia, title, start_date, end_date, color, alert_status, alert_email, alert_whatsapp, alert_hours_email, alert_hours_whatsapp } = req.body
+          const hoursEmail = parseArr(alert_hours_email, [24])
+          const hoursWa = parseArr(alert_hours_whatsapp, [2])
           const result = await sql`
             INSERT INTO events (materia, title, start_date, end_date, color, alert_status, alert_email, alert_whatsapp, alert_hours_email, alert_hours_whatsapp)
             VALUES (${materia}, ${title}, ${start_date}, ${end_date}, ${color},
               ${alert_status || 'pending'},
               ${alert_email !== undefined ? alert_email : true},
               ${alert_whatsapp !== undefined ? alert_whatsapp : false},
-              ${alert_hours_email || [24]},
-              ${alert_hours_whatsapp || [2]})
+              ${sql.array(hoursEmail, 'int4')},
+              ${sql.array(hoursWa, 'int4')})
             RETURNING *`
           res.json(result[0])
         } catch (e) { console.error(e); res.status(500).json({ error: 'Error del servidor' }) }
@@ -81,14 +89,16 @@ function apiPlugin() {
       app.put('/api/events/:id', verifyAdmin, async (req, res) => {
         try {
           const { materia, title, start_date, end_date, color, alert_status, alert_email, alert_whatsapp, alert_hours_email, alert_hours_whatsapp } = req.body
+          const hoursEmail = parseArr(alert_hours_email, [24])
+          const hoursWa = parseArr(alert_hours_whatsapp, [2])
           const result = await sql`
             UPDATE events SET
               materia = ${materia}, title = ${title}, start_date = ${start_date},
               end_date = ${end_date}, color = ${color}, alert_status = ${alert_status},
               alert_email = ${alert_email !== undefined ? alert_email : true},
               alert_whatsapp = ${alert_whatsapp !== undefined ? alert_whatsapp : false},
-              alert_hours_email = ${alert_hours_email || [24]},
-              alert_hours_whatsapp = ${alert_hours_whatsapp || [2]}
+              alert_hours_email = ${sql.array(hoursEmail, 'int4')},
+              alert_hours_whatsapp = ${sql.array(hoursWa, 'int4')}
             WHERE id = ${req.params.id} RETURNING *`
           res.json(result[0])
         } catch (e) { console.error(e); res.status(500).json({ error: 'Error del servidor' }) }
