@@ -37,7 +37,8 @@ function EventsManager() {
     alert_status: 'pending',
     alert_email: true,
     alert_whatsapp: false,
-    alert_hours: [2, 24]
+    alert_hours_email: [24],
+    alert_hours_whatsapp: [2]
   })
 
   // Estado para modales de confirmación
@@ -145,9 +146,10 @@ function EventsManager() {
         alert_status: event.alert_status,
         alert_email: event.alert_email !== false,
         alert_whatsapp: event.alert_whatsapp === true,
-        alert_hours: Array.isArray(event.alert_hours) && event.alert_hours.length > 0
-          ? event.alert_hours
-          : [2, 24]
+        alert_hours_email: Array.isArray(event.alert_hours_email) && event.alert_hours_email.length > 0
+          ? event.alert_hours_email : [24],
+        alert_hours_whatsapp: Array.isArray(event.alert_hours_whatsapp) && event.alert_hours_whatsapp.length > 0
+          ? event.alert_hours_whatsapp : [2]
       })
     } else {
       resetForm()
@@ -306,8 +308,7 @@ function EventsManager() {
               <th>Inicio</th>
               <th>Fin</th>
               <th>Color</th>
-              <th>Canales</th>
-              <th>Avisos</th>
+              <th>Canales y avisos</th>
               <th>Alerta</th>
               <th>Acciones</th>
             </tr>
@@ -335,22 +336,27 @@ function EventsManager() {
                 })}</td>
                 <td><span className="color-badge" style={{ background: event.color }}></span></td>
                 <td>
-                  <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                  <div style={{ fontSize: '0.78rem', lineHeight: '1.6' }}>
                     {event.alert_email !== false && (
-                      <span style={{ fontSize: '0.75rem', background: '#e3f0ff', color: '#1a6fc4', padding: '0.15rem 0.5rem', borderRadius: '999px' }}>Email</span>
+                      <div>
+                        <span style={{ background: '#e3f0ff', color: '#1a6fc4', padding: '0.1rem 0.4rem', borderRadius: '999px', marginRight: '0.3rem' }}>Email</span>
+                        {Array.isArray(event.alert_hours_email) && event.alert_hours_email.length > 0
+                          ? event.alert_hours_email.map(h => `${h}h`).join(', ')
+                          : '24h'}
+                      </div>
                     )}
                     {event.alert_whatsapp === true && (
-                      <span style={{ fontSize: '0.75rem', background: '#e6f9f0', color: '#1a8a4a', padding: '0.15rem 0.5rem', borderRadius: '999px' }}>WhatsApp</span>
+                      <div style={{ marginTop: '0.2rem' }}>
+                        <span style={{ background: '#e6f9f0', color: '#1a8a4a', padding: '0.1rem 0.4rem', borderRadius: '999px', marginRight: '0.3rem' }}>WA</span>
+                        {Array.isArray(event.alert_hours_whatsapp) && event.alert_hours_whatsapp.length > 0
+                          ? event.alert_hours_whatsapp.map(h => `${h}h`).join(', ')
+                          : '2h'}
+                      </div>
                     )}
                     {event.alert_email === false && event.alert_whatsapp !== true && (
-                      <span style={{ fontSize: '0.75rem', color: '#999' }}>—</span>
+                      <span style={{ color: '#999' }}>—</span>
                     )}
                   </div>
-                </td>
-                <td>
-                  {Array.isArray(event.alert_hours) && event.alert_hours.length > 0
-                    ? event.alert_hours.map(h => `${h}h`).join(', ')
-                    : '2h, 24h'}
                 </td>
                 <td>
                   <span className={`alert-badge ${event.estado_alerta === 'enviado' ? 'sent' : 'pending'}`}>
@@ -447,8 +453,10 @@ function EventsManager() {
 
               <div className="form-group">
                 <label>Canales de alerta</label>
-                <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.4rem' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 'normal', cursor: 'pointer' }}>
+
+                {/* Email */}
+                <div style={{ border: '1px solid #e0e0e0', borderRadius: '8px', padding: '0.75rem 1rem', marginTop: '0.5rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: '600', cursor: 'pointer', marginBottom: '0.5rem' }}>
                     <input
                       type="checkbox"
                       checked={form.alert_email}
@@ -456,7 +464,36 @@ function EventsManager() {
                     />
                     Email
                   </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 'normal', cursor: 'pointer' }}>
+                  {form.alert_email && (
+                    <div>
+                      <span style={{ fontSize: '0.82rem', color: '#666', display: 'block', marginBottom: '0.4rem' }}>Avisar con anticipación:</span>
+                      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                        {[1, 2, 6, 12, 24, 48].map(h => (
+                          <label key={h} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontWeight: 'normal', cursor: 'pointer', fontSize: '0.9rem' }}>
+                            <input
+                              type="checkbox"
+                              checked={form.alert_hours_email.includes(h)}
+                              onChange={e => {
+                                const updated = e.target.checked
+                                  ? [...form.alert_hours_email, h].sort((a, b) => a - b)
+                                  : form.alert_hours_email.filter(x => x !== h)
+                                setForm({ ...form, alert_hours_email: updated })
+                              }}
+                            />
+                            {h}h
+                          </label>
+                        ))}
+                      </div>
+                      {form.alert_hours_email.length === 0 && (
+                        <p style={{ color: '#dc3545', fontSize: '0.8rem', marginTop: '0.3rem' }}>Seleccioná al menos una hora.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* WhatsApp */}
+                <div style={{ border: '1px solid #e0e0e0', borderRadius: '8px', padding: '0.75rem 1rem', marginTop: '0.5rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: '600', cursor: 'pointer', marginBottom: '0.5rem' }}>
                     <input
                       type="checkbox"
                       checked={form.alert_whatsapp}
@@ -464,33 +501,32 @@ function EventsManager() {
                     />
                     WhatsApp
                   </label>
+                  {form.alert_whatsapp && (
+                    <div>
+                      <span style={{ fontSize: '0.82rem', color: '#666', display: 'block', marginBottom: '0.4rem' }}>Avisar con anticipación:</span>
+                      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                        {[1, 2, 6, 12, 24, 48].map(h => (
+                          <label key={h} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontWeight: 'normal', cursor: 'pointer', fontSize: '0.9rem' }}>
+                            <input
+                              type="checkbox"
+                              checked={form.alert_hours_whatsapp.includes(h)}
+                              onChange={e => {
+                                const updated = e.target.checked
+                                  ? [...form.alert_hours_whatsapp, h].sort((a, b) => a - b)
+                                  : form.alert_hours_whatsapp.filter(x => x !== h)
+                                setForm({ ...form, alert_hours_whatsapp: updated })
+                              }}
+                            />
+                            {h}h
+                          </label>
+                        ))}
+                      </div>
+                      {form.alert_hours_whatsapp.length === 0 && (
+                        <p style={{ color: '#dc3545', fontSize: '0.8rem', marginTop: '0.3rem' }}>Seleccioná al menos una hora.</p>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </div>
-
-              <div className="form-group">
-                <label>Avisos automáticos (horas antes del evento)</label>
-                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.4rem' }}>
-                  {[1, 2, 6, 12, 24, 48].map(h => (
-                    <label key={h} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 'normal', cursor: 'pointer' }}>
-                      <input
-                        type="checkbox"
-                        checked={form.alert_hours.includes(h)}
-                        onChange={e => {
-                          const updated = e.target.checked
-                            ? [...form.alert_hours, h].sort((a, b) => a - b)
-                            : form.alert_hours.filter(x => x !== h)
-                          setForm({ ...form, alert_hours: updated })
-                        }}
-                      />
-                      {h}h
-                    </label>
-                  ))}
-                </div>
-                {form.alert_hours.length === 0 && (
-                  <p style={{ color: '#dc3545', fontSize: '0.85rem', marginTop: '0.3rem' }}>
-                    Seleccioná al menos una opción para recibir avisos automáticos.
-                  </p>
-                )}
               </div>
               <div className="modal-actions">
                 <button type="button" className="btn btn-secondary" onClick={() => { setShowModal(false); setModalError(''); }}>

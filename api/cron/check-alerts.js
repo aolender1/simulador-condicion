@@ -72,14 +72,17 @@ export default async function handler(req, res) {
       return res.json({ message: 'No hay eventos próximos', sent: 0 })
     }
 
-    // Filter events that fall within any of their configured alert windows
+    // Filter events where email OR whatsapp window is active
     const events = allPending.filter(event => {
-      const hoursConfig = Array.isArray(event.alert_hours) && event.alert_hours.length > 0
-        ? event.alert_hours
-        : [2, 24]
+      const hoursEmail = Array.isArray(event.alert_hours_email) && event.alert_hours_email.length > 0
+        ? event.alert_hours_email : [24]
+      const hoursWhatsapp = Array.isArray(event.alert_hours_whatsapp) && event.alert_hours_whatsapp.length > 0
+        ? event.alert_hours_whatsapp : [2]
       const msUntil = new Date(event.start_date) - now
       const hoursUntilEvent = msUntil / (1000 * 60 * 60)
-      return hoursConfig.some(h => hoursUntilEvent <= h && hoursUntilEvent > 0)
+      const emailActive = event.alert_email !== false && hoursEmail.some(h => hoursUntilEvent <= h && hoursUntilEvent > 0)
+      const waActive = event.alert_whatsapp === true && hoursWhatsapp.some(h => hoursUntilEvent <= h && hoursUntilEvent > 0)
+      return emailActive || waActive
     })
 
     if (events.length === 0) {
@@ -112,9 +115,15 @@ export default async function handler(req, res) {
 
       const sendEmail = event.alert_email !== false
       const sendWhatsApp = event.alert_whatsapp === true
+      const hoursEmail = Array.isArray(event.alert_hours_email) && event.alert_hours_email.length > 0
+        ? event.alert_hours_email : [24]
+      const hoursWhatsapp = Array.isArray(event.alert_hours_whatsapp) && event.alert_hours_whatsapp.length > 0
+        ? event.alert_hours_whatsapp : [2]
+      const emailInWindow = hoursEmail.some(h => hoursUntil <= h && hoursUntil > 0)
+      const waInWindow = hoursWhatsapp.some(h => hoursUntil <= h && hoursUntil > 0)
 
       // --- Email ---
-      if (sendEmail && emails.length > 0) {
+      if (sendEmail && emailInWindow && emails.length > 0) {
         const emailSubject = `[RECORDATORIO ${hoursUntil}h] ${event.materia}: ${event.title}`
         const emailHtml = `
           <h2>Recordatorio de Evento</h2>
@@ -141,7 +150,7 @@ export default async function handler(req, res) {
       }
 
       // --- WhatsApp ---
-      if (sendWhatsApp && contacts.length > 0) {
+      if (sendWhatsApp && waInWindow && contacts.length > 0) {
         for (const contact of contacts) {
           try {
             await sendWhatsAppMessage(contact.phone, whatsappTemplateName, [
