@@ -53,10 +53,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  // Verify secret to protect the endpoint (set CRON_SECRET in Vercel env vars)
+  // Verify secret - accepts header OR query param for cron-job.org compatibility
   const secret = process.env.CRON_SECRET
   if (secret) {
-    const incoming = req.headers['x-cron-secret'] || req.query.secret
+    const incoming = req.headers['x-cron-secret'] || req.headers['authorization']?.replace('Bearer ', '') || req.query.secret
     if (incoming !== secret) {
       return res.status(401).json({ error: 'Unauthorized' })
     }
