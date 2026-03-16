@@ -19,26 +19,12 @@ function ContactsManager() {
     type: 'default'
   })
 
-  // Obtener el token JWT de Better Auth
-  const getAuthHeaders = async () => {
-    try {
-      const getToken = authClient.getJWTToken ?? authClient.getToken ?? authClient.session?.getToken
-      if (typeof getToken === 'function') {
-        const token = await getToken()
-        if (token && typeof token === 'string') {
-          return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
-        }
-      }
-    } catch (err) {
-      // token no disponible, continuar sin auth header
-    }
-    return { 'Content-Type': 'application/json' }
-  }
+  // El servidor valida la sesión por cookie de better-auth, no se necesita JWT
+  const getAuthHeaders = () => ({ 'Content-Type': 'application/json' })
 
   const fetchContacts = async () => {
     try {
-      const headers = await getAuthHeaders();
-      const res = await fetch('/api/contacts', { headers })
+    const res = await fetch('/api/contacts', { headers: getAuthHeaders() })
 
       if (!res.ok) {
         throw new Error('Error al cargar contactos')
@@ -83,13 +69,9 @@ function ContactsManager() {
     if (!newEmail.trim()) return
 
     try {
-      const headers = await getAuthHeaders();
       const res = await fetch('/api/contacts', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...headers
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ email: newEmail, phone: newPhone || null })
       })
 
