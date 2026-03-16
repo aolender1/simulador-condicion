@@ -249,10 +249,14 @@ function EventsManager() {
 
   const sendAlert = (id) => {
     const event = events.find(e => e.id === id)
+    const hasEmail = event?.alert_email === true
+    const hasWhatsApp = event?.alert_whatsapp === true
+    const channels = [hasEmail && 'Email', hasWhatsApp && 'WhatsApp'].filter(Boolean).join(' y ')
+
     setConfirmModal({
       isOpen: true,
-      title: 'Enviar Alerta por Email',
-      message: `¿Enviar recordatorio por email a todos los contactos para el evento "${event?.title}" de ${event?.materia}?`,
+      title: 'Enviar Alerta Manual',
+      message: `¿Enviar recordatorio por ${channels || 'los canales configurados'} a todos los contactos para el evento "${event?.title}" de ${event?.materia}?`,
       type: 'success',
       onConfirm: async () => {
         closeConfirmModal()
@@ -269,11 +273,7 @@ function EventsManager() {
             throw new Error(data.error || 'Error al enviar alerta')
           }
 
-          if (data.message) {
-            setSuccessMessage(data.message)
-          } else {
-            setSuccessMessage('Alerta enviada correctamente a todos los contactos')
-          }
+          setSuccessMessage(data.message || 'Alerta enviada correctamente')
           fetchEvents()
         } catch (err) {
           console.error(err)

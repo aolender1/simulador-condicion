@@ -183,15 +183,31 @@ app.post('/api/events/:id/alert', verifyAdmin, async (req, res) => {
     const events = await sql`SELECT * FROM events WHERE id = ${req.params.id}`;
     if (events.length === 0) return res.status(404).json({ error: 'Evento no encontrado' });
     const event = events[0];
-    const contacts = await sql`SELECT email FROM contacts`;
-    if (contacts.length === 0) return res.status(400).json({ error: 'No hay contactos registrados para enviar alertas' });
 
-    const startDate = new Date(event.start_date).toLocaleString('es-AR');
+    const eventDate = new Date(event.start_date);
+    const startDate = eventDate.toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' });
+    const startDateOnly = eventDate.toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' });
+    const startTimeOnly = eventDate.toLocaleTimeString('es-AR', {
+      timeZone: 'America/Argentina/Buenos_Aires',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
 
-    // Enviar email individual a cada contacto para no exponer los demás destinatarios
     const fromAddress = `Calendario UNSL <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`;
-    const emailSubject = `Recordatorio: ${event.title}`;
-    const emailHtml = `
+    const results = [];
+
+    const sendEmail = event.alert_email !== false;
+    const sendWhatsApp = event.alert_whatsapp === true;
+    const whatsappTemplateName = process.env.WHATSAPP_TEMPLATE_NAME || 'alerta_evento';
+
+    // --- Email ---
+    if (sendEmail) {
+      const contacts = await sql`SELECT email FROM contacts WHERE email IS NOT NULL AND email <> ''`;
+      if (contacts.length === 0 && !sendWhatsApp) {
+        return res.status(400).json({ error: 'No hay contactos registrados para enviar alertas' });
+      }
+      const emailSubject = `Recordatorio: ${event.title}`;
+      const emailHtml = `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #00796b;">${event.materia}</h2>
           <p><strong>${event.title}</strong></p>
@@ -200,20 +216,67 @@ app.post('/api/events/:id/alert', verifyAdmin, async (req, res) => {
           <p style="color: #666; font-size: 12px;">Este es un recordatorio automático del Calendario UNSL.</p>
         </div>
       `;
-    for (const contact of contacts) {
-      await resend.emails.send({
-        from: fromAddress,
-        to: contact.email,
-        subject: emailSubject,
-        html: emailHtml
-      });
+      for (const contact of contacts) {
+        try {
+          await resend.emails.send({
+            from: fromAddress,
+            to: contact.email,
+            subject: emailSubject,
+            html: emailHtml
+          });
+          results.push({ type: 'email', to: contact.email, status: 'sent' });
+        } catch (err) {
+          results.push({ type: 'email', to: contact.email, status: 'error', error: err.message });
+        }
+      }
     }
-    const emailResult = { sent: contacts.length };
 
-    console.log('Email enviado:', emailResult);
+    // --- WhatsApp ---
+    if (sendWhatsApp) {
+      const phoneContacts = await sql`SELECT phone FROM contacts WHERE phone IS NOT NULL AND phone <> ''`;
+      for (const contact of phoneContacts) {
+        try {
+          const normalizedPhone = contact.phone.replace(/[\s\-\(\)]/g, '').replace(/^\+/, '');
+          const waBody = {
+            messaging_product: 'whatsapp',
+            to: normalizedPhone,
+            type: 'template',
+            template: {
+              name: whatsappTemplateName,
+              language: { code: 'es_AR' },
+              components: [{
+                type: 'body',
+                parameters: [
+                  { type: 'text', text: event.title },
+                  { type: 'text', text: startDateOnly },
+                  { type: 'text', text: startTimeOnly }
+                ]
+              }]
+            }
+          };
+          const waRes = await fetch(
+            `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
+            {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(waBody)
+            }
+          );
+          const waData = await waRes.json();
+          if (!waRes.ok) throw new Error(JSON.stringify(waData));
+          results.push({ type: 'whatsapp', to: contact.phone, status: 'sent' });
+        } catch (err) {
+          results.push({ type: 'whatsapp', to: contact.phone, status: 'error', error: err.message });
+        }
+      }
+    }
 
     await sql`UPDATE events SET estado_alerta = 'enviado' WHERE id = ${req.params.id}`;
-    res.json({ success: true, message: `Alerta enviada a ${contacts.length} contacto(s)` });
+    const sentCount = results.filter(r => r.status === 'sent').length;
+    res.json({ success: true, message: `Alerta enviada (${sentCount} envío/s exitoso/s)`, results });
   } catch (error) {
     console.error('Alert error:', error);
 
