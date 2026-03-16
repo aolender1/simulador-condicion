@@ -53,6 +53,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
+  // Verify secret to protect the endpoint (set CRON_SECRET in Vercel env vars)
+  const secret = process.env.CRON_SECRET
+  if (secret) {
+    const incoming = req.headers['x-cron-secret'] || req.query.secret
+    if (incoming !== secret) {
+      return res.status(401).json({ error: 'Unauthorized' })
+    }
+  }
+
   const sql = neon(process.env.DATABASE_URL)
   const resend = new Resend(process.env.RESEND_API_KEY)
 
