@@ -11,6 +11,10 @@
     {
       "src": "server.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "api/cron/check-alerts.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
@@ -29,6 +33,10 @@
     {
       "src": "/api/send-email",
       "dest": "/server.js"
+    },
+    {
+      "src": "/api/cron/check-alerts",
+      "dest": "/api/cron/check-alerts.js"
     },
     {
       "handle": "filesystem"

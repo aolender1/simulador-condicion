@@ -53,6 +53,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
+  // Verify secret to protect the endpoint (set CRON_SECRET in Vercel env vars)
+  const secret = process.env.CRON_SECRET
+  if (secret) {
+    const incoming = req.headers['x-cron-secret'] || req.query.secret
+    if (incoming !== secret) {
+      return res.status(401).json({ error: 'Unauthorized' })
+    }
+  }
+
   const sql = neon(process.env.DATABASE_URL)
   const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -89,14 +98,9 @@ export default async function handler(req, res) {
       return res.json({ message: 'No hay eventos dentro de las ventanas de alerta', sent: 0 })
     }
 
-    const mails = await sql`SELECT email FROM mails`
-    const contacts = await sql`SELECT email, phone FROM contacts WHERE phone IS NOT NULL AND phone <> ''`
-
-    if (mails.length === 0 && contacts.length === 0) {
-      return res.json({ message: 'No hay destinatarios registrados', sent: 0 })
-    }
-
-    const emails = mails.map(m => m.email)
+    const contacts = await sql`SELECT email, phone FROM contacts`
+    const emails = contacts.map(c => c.email).filter(e => e && e.trim() !== '')
+    const phoneContacts = contacts.filter(c => c.phone && c.phone.trim() !== '')
     const fromAddress = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
 
     let sentCount = 0
@@ -153,8 +157,8 @@ export default async function handler(req, res) {
       }
 
       // --- WhatsApp ---
-      if (sendWhatsApp && waInWindow && contacts.length > 0) {
-        for (const contact of contacts) {
+      if (sendWhatsApp && waInWindow && phoneContacts.length > 0) {
+        for (const contact of phoneContacts) {
           try {
             await sendWhatsAppMessage(contact.phone, whatsappTemplateName, [
               event.title,
