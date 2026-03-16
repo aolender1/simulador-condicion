@@ -53,14 +53,17 @@ function EventsManager() {
   // Obtener headers de autenticación
   const getAuthHeaders = async () => {
     try {
-      const token = await authClient.getJWTToken?.();
-      if (token) {
-        return { 'Authorization': `Bearer ${token}` };
+      const getToken = authClient.getJWTToken ?? authClient.getToken ?? authClient.session?.getToken
+      if (typeof getToken === 'function') {
+        const token = await getToken()
+        if (token && typeof token === 'string') {
+          return { 'Authorization': `Bearer ${token}` }
+        }
       }
     } catch (err) {
-      console.error('Error obteniendo token:', err);
+      // token no disponible, continuar sin auth header
     }
-    return {};
+    return {}
   }
 
   const fetchEvents = async () => {
