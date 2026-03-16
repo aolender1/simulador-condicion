@@ -5,6 +5,7 @@ import ConfirmModal from './ConfirmModal'
 const MATERIAS = [
   'Ingles',
   'Laboratorio de Datos',
+  'Probabilidad Aplicada',
   'Modelos Parametricos',
   'Tecnicas de Muestreo',
   'Taller Integrador I',
