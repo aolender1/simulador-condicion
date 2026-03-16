@@ -338,7 +338,7 @@ function EventsManager() {
                 <td><span className="color-badge" style={{ background: event.color }}></span></td>
                 <td>
                   <div style={{ fontSize: '0.78rem', lineHeight: '1.6' }}>
-                    {event.alert_email !== false && (
+                    {event.alert_email === true && (
                       <div>
                         <span style={{ background: '#e3f0ff', color: '#1a6fc4', padding: '0.1rem 0.4rem', borderRadius: '999px', marginRight: '0.3rem' }}>Email</span>
                         {Array.isArray(event.alert_hours_email) && event.alert_hours_email.length > 0
@@ -347,14 +347,14 @@ function EventsManager() {
                       </div>
                     )}
                     {event.alert_whatsapp === true && (
-                      <div style={{ marginTop: '0.2rem' }}>
+                      <div style={{ marginTop: event.alert_email === true ? '0.2rem' : 0 }}>
                         <span style={{ background: '#e6f9f0', color: '#1a8a4a', padding: '0.1rem 0.4rem', borderRadius: '999px', marginRight: '0.3rem' }}>WA</span>
                         {Array.isArray(event.alert_hours_whatsapp) && event.alert_hours_whatsapp.length > 0
                           ? event.alert_hours_whatsapp.map(h => `${h}h`).join(', ')
                           : '2h'}
                       </div>
                     )}
-                    {event.alert_email === false && event.alert_whatsapp !== true && (
+                    {event.alert_email !== true && event.alert_whatsapp !== true && (
                       <span style={{ color: '#999' }}>—</span>
                     )}
                   </div>
