@@ -176,12 +176,13 @@ function EventsManager() {
     }
 
 
+    const url = editingEvent ? `/api/events/${editingEvent.id}` : '/api/events'
+    const method = editingEvent ? 'PUT' : 'POST'
+
     try {
       const res = await fetch(url, {
         method,
-        headers: {
-          ...getAuthHeaders()
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(payload)
       })
 

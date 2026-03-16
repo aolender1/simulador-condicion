@@ -104,12 +104,15 @@ export default async function handler(req, res) {
 
     for (const event of events) {
       const eventDate = new Date(event.start_date)
-      const startDate = eventDate.toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' })
-      const startDateOnly = eventDate.toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' })
+      const tzOpts = { timeZone: 'America/Argentina/Buenos_Aires' }
+      const startDate = eventDate.toLocaleString('es-AR', {
+        ...tzOpts,
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: false
+      })
+      const startDateOnly = eventDate.toLocaleDateString('es-AR', { ...tzOpts, year: 'numeric', month: '2-digit', day: '2-digit' })
       const startTimeOnly = eventDate.toLocaleTimeString('es-AR', {
-        timeZone: 'America/Argentina/Buenos_Aires',
-        hour: '2-digit',
-        minute: '2-digit'
+        ...tzOpts, hour: '2-digit', minute: '2-digit', hour12: false
       })
       const hoursUntil = Math.round((eventDate - now) / (1000 * 60 * 60))
 
