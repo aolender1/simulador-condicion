@@ -33,7 +33,8 @@ function App() {
             'lynchjonai@gmail.com',
             'maxipadilla.unsl@gmail.com',
             'supremacyaaa@gmail.com',
-            'valeriamorenoarg@gmail.com'
+            'valeriamorenoarg@gmail.com',
+            'rominaflorenciaramos93@gmail.com'
           ];
 
           const userEmail = session.data.user.email?.toLowerCase();
