@@ -50,21 +50,8 @@ function EventsManager() {
     type: 'default'
   })
 
-  // Obtener headers de autenticación
-  const getAuthHeaders = async () => {
-    try {
-      const getToken = authClient.getJWTToken ?? authClient.getToken ?? authClient.session?.getToken
-      if (typeof getToken === 'function') {
-        const token = await getToken()
-        if (token && typeof token === 'string') {
-          return { 'Authorization': `Bearer ${token}` }
-        }
-      }
-    } catch (err) {
-      // token no disponible, continuar sin auth header
-    }
-    return {}
-  }
+  // El servidor valida la sesión por cookie de better-auth, no se necesita JWT
+  const getAuthHeaders = () => ({ 'Content-Type': 'application/json' })
 
   const fetchEvents = async () => {
     try {
@@ -190,15 +177,10 @@ function EventsManager() {
 
 
     try {
-      const headers = await getAuthHeaders();
-      const url = editingEvent ? `/api/events/${editingEvent.id}` : '/api/events'
-      const method = editingEvent ? 'PUT' : 'POST'
-
       const res = await fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json',
-          ...headers
+          ...getAuthHeaders()
         },
         body: JSON.stringify(payload)
       })
@@ -230,10 +212,9 @@ function EventsManager() {
       onConfirm: async () => {
         closeConfirmModal()
         try {
-          const headers = await getAuthHeaders();
           const res = await fetch(`/api/events/${id}`, {
             method: 'DELETE',
-            headers
+            headers: getAuthHeaders()
           })
 
           if (!res.ok) {
@@ -264,10 +245,9 @@ function EventsManager() {
       onConfirm: async () => {
         closeConfirmModal()
         try {
-          const headers = await getAuthHeaders();
           const res = await fetch(`/api/events/${id}/alert`, {
             method: 'POST',
-            headers
+            headers: getAuthHeaders()
           })
 
           const data = await res.json()
