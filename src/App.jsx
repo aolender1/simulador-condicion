@@ -38,8 +38,6 @@ function App() {
 
           const userEmail = session.data.user.email?.toLowerCase();
           const isAllowed = allowedEmails.includes(userEmail);
-
-          console.log('User email:', userEmail, 'Allowed:', isAllowed);
           setIsEmailAllowed(isAllowed);
         }
       } catch (error) {

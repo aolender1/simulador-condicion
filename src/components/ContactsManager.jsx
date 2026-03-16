@@ -22,21 +22,17 @@ function ContactsManager() {
   // Obtener el token JWT de Better Auth
   const getAuthHeaders = async () => {
     try {
-      let token = null;
-      if (typeof authClient.getJWTToken === 'function') {
-        token = await authClient.getJWTToken();
-      }
-
-      if (token && typeof token === 'string' && token !== 'undefined') {
-        return {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        };
+      const getToken = authClient.getJWTToken ?? authClient.getToken ?? authClient.session?.getToken
+      if (typeof getToken === 'function') {
+        const token = await getToken()
+        if (token && typeof token === 'string') {
+          return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+        }
       }
     } catch (err) {
-      console.error('Error obteniendo token:', err);
+      // token no disponible, continuar sin auth header
     }
-    return { 'Content-Type': 'application/json' };
+    return { 'Content-Type': 'application/json' }
   }
 
   const fetchContacts = async () => {
