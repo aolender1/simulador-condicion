@@ -206,9 +206,6 @@ app.post('/api/events/:id/alert', verifyAdmin, async (req, res) => {
     const sendWhatsApp = event.alert_whatsapp === true || event.alert_whatsapp === 'true';
     const whatsappTemplateName = process.env.WHATSAPP_TEMPLATE_NAME || 'alerta_evento';
 
-    console.log('[v0] Alert event:', { id: event.id, alert_email: event.alert_email, alert_whatsapp: event.alert_whatsapp, sendEmail, sendWhatsApp });
-    console.log('[v0] WhatsApp env:', { hasToken: !!process.env.WHATSAPP_ACCESS_TOKEN, hasPhoneId: !!process.env.WHATSAPP_PHONE_NUMBER_ID, templateName: whatsappTemplateName });
-
     // --- Email ---
     if (sendEmail) {
       const contacts = await sql`SELECT email FROM contacts WHERE email IS NOT NULL AND email <> ''`;
@@ -246,7 +243,6 @@ app.post('/api/events/:id/alert', verifyAdmin, async (req, res) => {
       for (const contact of phoneContacts) {
         try {
           const normalizedPhone = contact.phone.replace(/[\s\-\(\)]/g, '').replace(/^\+/, '');
-          console.log('[v0] Sending WhatsApp to:', normalizedPhone);
           const waBody = {
             messaging_product: 'whatsapp',
             to: normalizedPhone,
@@ -258,6 +254,7 @@ app.post('/api/events/:id/alert', verifyAdmin, async (req, res) => {
                 type: 'body',
                 parameters: [
                   { type: 'text', text: event.title },
+                  { type: 'text', text: event.materia },
                   { type: 'text', text: startDateOnly },
                   { type: 'text', text: startTimeOnly }
                 ]
@@ -276,7 +273,6 @@ app.post('/api/events/:id/alert', verifyAdmin, async (req, res) => {
             }
           );
           const waData = await waRes.json();
-          console.log('[v0] WhatsApp response:', waRes.status, JSON.stringify(waData));
           if (!waRes.ok) throw new Error(JSON.stringify(waData));
           results.push({ type: 'whatsapp', to: contact.phone, status: 'sent' });
         } catch (err) {
