@@ -162,6 +162,7 @@ export default async function handler(req, res) {
           try {
             await sendWhatsAppMessage(contact.phone, whatsappTemplateName, [
               event.title,
+              event.materia,
               startDateOnly,
               startTimeOnly
             ])
