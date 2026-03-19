@@ -762,6 +762,11 @@ footer a:hover {
     color: #155724;
 }
 
+.alert-badge.partial {
+    background: #cce5ff;
+    color: #004085;
+}
+
 .actions {
     display: flex;
     gap: 0.5rem;

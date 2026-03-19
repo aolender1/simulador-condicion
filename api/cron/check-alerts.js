@@ -104,9 +104,9 @@ export default async function handler(req, res) {
       return defaultVal
     }
 
-    // Filter events where email OR whatsapp window is active
-    // Use a 2h window tolerance so a cron running every 30min never misses an alert
-    const WINDOW_TOLERANCE_HOURS = 2.0
+    // WINDOW_TOLERANCE_HOURS must be < the smallest alert interval to avoid double-firing.
+    // e.g. if email=2h and WA=1h, tolerance must be <=1h so email doesn't re-fire at the 1h mark.
+    const WINDOW_TOLERANCE_HOURS = 0.75
     const events = allPending.filter(event => {
       const hoursEmail = parseHours(event.alert_hours_email, [24])
       const hoursWhatsapp = parseHours(event.alert_hours_whatsapp, [2])
@@ -200,7 +200,7 @@ export default async function handler(req, res) {
         }
       }
 
-      // Mark each channel individually, and only set alert_status='sent' when both are done
+      // Mark each channel individually, and set alert_status based on what's been sent
       const emailSent = results.some(r => r.eventId === event.id && r.type === 'email' && r.status === 'sent')
       const waSent = results.some(r => r.eventId === event.id && r.type === 'whatsapp' && r.status === 'sent')
 
@@ -211,22 +211,35 @@ export default async function handler(req, res) {
         await sql`UPDATE events SET whatsapp_alert_sent = true WHERE id = ${event.id}`
       }
 
-      // Mark fully sent only when all configured channels are done
-      const needsEmail = sendEmail && !event.email_alert_sent
-      const needsWa = sendWhatsApp && !event.whatsapp_alert_sent
+      // Determine new alert_status based on which channels are configured and sent
+      const needsEmail = sendEmail
+      const needsWa = sendWhatsApp
       const emailDone = !needsEmail || emailSent || event.email_alert_sent
       const waDone = !needsWa || waSent || event.whatsapp_alert_sent
 
+      let newStatus = event.alert_status
       if (emailDone && waDone) {
-        await sql`UPDATE events SET alert_status = 'sent' WHERE id = ${event.id}`
-        console.log('[v0] Evento completamente enviado:', event.title)
-      } else {
-        console.log('[v0] Evento parcialmente enviado (queda pendiente):', event.title, { emailDone, waDone })
+        newStatus = 'sent'
+      } else if ((emailSent || event.email_alert_sent) && needsEmail && !waDone) {
+        newStatus = 'email_sent'
+      } else if ((waSent || event.whatsapp_alert_sent) && needsWa && !emailDone) {
+        newStatus = 'whatsapp_sent'
+      }
+
+      if (newStatus !== event.alert_status) {
+        await sql`UPDATE events SET alert_status = ${newStatus} WHERE id = ${event.id}`
+        console.log('[v0] Estado actualizado:', event.title, '->', newStatus)
       }
       sentCount++
     }
 
-    res.json({ message: 'Alertas procesadas', sent: sentCount, results })
+    // Auto-delete events that have ended
+    const deleted = await sql`DELETE FROM events WHERE end_date < ${now.toISOString()} RETURNING id, title`
+    if (deleted.length > 0) {
+      console.log('[v0] Eventos eliminados automáticamente:', deleted.map(e => e.title))
+    }
+
+    res.json({ message: 'Alertas procesadas', sent: sentCount, results, deleted: deleted.length })
   } catch (error) {
     console.error(error)
     res.status(500).json({ error: 'Error al procesar alertas' })

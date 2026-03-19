@@ -345,9 +345,15 @@ function EventsManager() {
                   </div>
                 </td>
                 <td>
-                  <span className={`alert-badge ${event.estado_alerta === 'enviado' ? 'sent' : 'pending'}`}>
-                    {event.estado_alerta === 'enviado' ? 'Enviada' : 'Pendiente'}
-                  </span>
+                  {(() => {
+                    const s = event.alert_status
+                    const label = s === 'sent' ? 'Enviado' :
+                      s === 'email_sent' ? 'Enviado Mail' :
+                      s === 'whatsapp_sent' ? 'Enviado WA' : 'Pendiente'
+                    const cls = s === 'sent' ? 'sent' :
+                      s === 'email_sent' || s === 'whatsapp_sent' ? 'partial' : 'pending'
+                    return <span className={`alert-badge ${cls}`}>{label}</span>
+                  })()}
                 </td>
                 <td className="actions">
                   <button className="btn btn-secondary" onClick={() => openModal(event)}>Editar</button>
