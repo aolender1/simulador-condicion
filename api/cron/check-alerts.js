@@ -90,14 +90,25 @@ export default async function handler(req, res) {
       alert_hours_email: e.alert_hours_email, alert_hours_whatsapp: e.alert_hours_whatsapp
     })))
 
+    // Helper to safely parse alert_hours fields (can come as array or JSON string from DB)
+    const parseHours = (val, defaultVal) => {
+      if (Array.isArray(val) && val.length > 0) return val.map(Number)
+      if (typeof val === 'string') {
+        try {
+          const parsed = JSON.parse(val)
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed.map(Number)
+        } catch {}
+      }
+      if (typeof val === 'number') return [val]
+      return defaultVal
+    }
+
     // Filter events where email OR whatsapp window is active
-    // Use a 90-minute window tolerance: alert fires if hoursUntil <= target AND hoursUntil > (target - 1.5)
+    // Use a 2h window tolerance so a cron running every 30min never misses an alert
     const WINDOW_TOLERANCE_HOURS = 2.0
     const events = allPending.filter(event => {
-      const hoursEmail = Array.isArray(event.alert_hours_email) && event.alert_hours_email.length > 0
-        ? event.alert_hours_email : [24]
-      const hoursWhatsapp = Array.isArray(event.alert_hours_whatsapp) && event.alert_hours_whatsapp.length > 0
-        ? event.alert_hours_whatsapp : [2]
+      const hoursEmail = parseHours(event.alert_hours_email, [24])
+      const hoursWhatsapp = parseHours(event.alert_hours_whatsapp, [2])
       const msUntil = new Date(event.start_date) - now
       const hoursUntilEvent = msUntil / (1000 * 60 * 60)
       const emailActive = (event.alert_email === true || event.alert_email === 'true') &&
@@ -139,10 +150,8 @@ export default async function handler(req, res) {
 
       const sendEmail = event.alert_email === true || event.alert_email === 'true'
       const sendWhatsApp = event.alert_whatsapp === true || event.alert_whatsapp === 'true'
-      const hoursEmail = Array.isArray(event.alert_hours_email) && event.alert_hours_email.length > 0
-        ? event.alert_hours_email : [24]
-      const hoursWhatsapp = Array.isArray(event.alert_hours_whatsapp) && event.alert_hours_whatsapp.length > 0
-        ? event.alert_hours_whatsapp : [2]
+      const hoursEmail = parseHours(event.alert_hours_email, [24])
+      const hoursWhatsapp = parseHours(event.alert_hours_whatsapp, [2])
       const emailInWindow = hoursEmail.some(h => hoursUntilExact <= h && hoursUntilExact > (h - WINDOW_TOLERANCE_HOURS))
       const waInWindow = hoursWhatsapp.some(h => hoursUntilExact <= h && hoursUntilExact > (h - WINDOW_TOLERANCE_HOURS))
 
