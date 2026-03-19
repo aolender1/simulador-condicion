@@ -71,11 +71,12 @@ export default async function handler(req, res) {
     const now = new Date()
     console.log('[v0] Cron ejecutado:', now.toISOString(), '| Hora AR:', now.toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' }))
 
-    // Fetch all pending events
+    // Fetch all pending events — an event is pending if at least one channel hasn't been sent yet
     const allPending = await sql`
       SELECT * FROM events 
       WHERE alert_status = 'pending' 
       AND start_date > ${now.toISOString()}
+      AND (email_alert_sent = false OR whatsapp_alert_sent = false)
     `
 
     if (allPending.length === 0) {
@@ -111,9 +112,9 @@ export default async function handler(req, res) {
       const hoursWhatsapp = parseHours(event.alert_hours_whatsapp, [2])
       const msUntil = new Date(event.start_date) - now
       const hoursUntilEvent = msUntil / (1000 * 60 * 60)
-      const emailActive = (event.alert_email === true || event.alert_email === 'true') &&
+      const emailActive = !event.email_alert_sent && (event.alert_email === true || event.alert_email === 'true') &&
         hoursEmail.some(h => hoursUntilEvent <= h && hoursUntilEvent > (h - WINDOW_TOLERANCE_HOURS))
-      const waActive = (event.alert_whatsapp === true || event.alert_whatsapp === 'true') &&
+      const waActive = !event.whatsapp_alert_sent && (event.alert_whatsapp === true || event.alert_whatsapp === 'true') &&
         hoursWhatsapp.some(h => hoursUntilEvent <= h && hoursUntilEvent > (h - WINDOW_TOLERANCE_HOURS))
       return emailActive || waActive
     })
@@ -175,9 +176,9 @@ export default async function handler(req, res) {
               subject: emailSubject,
               html: emailHtml
             })
-            results.push({ type: 'email', to: email, status: 'sent' })
+            results.push({ eventId: event.id, type: 'email', to: email, status: 'sent' })
           } catch (err) {
-            results.push({ type: 'email', to: email, status: 'error', error: err.message })
+            results.push({ eventId: event.id, type: 'email', to: email, status: 'error', error: err.message })
           }
         }
       }
@@ -192,14 +193,36 @@ export default async function handler(req, res) {
               startDateOnly,
               startTimeOnly
             ])
-            results.push({ type: 'whatsapp', to: contact.phone, status: 'sent' })
+            results.push({ eventId: event.id, type: 'whatsapp', to: contact.phone, status: 'sent' })
           } catch (err) {
-            results.push({ type: 'whatsapp', to: contact.phone, status: 'error', error: err.message })
+            results.push({ eventId: event.id, type: 'whatsapp', to: contact.phone, status: 'error', error: err.message })
           }
         }
       }
 
-      await sql`UPDATE events SET alert_status = 'sent' WHERE id = ${event.id}`
+      // Mark each channel individually, and only set alert_status='sent' when both are done
+      const emailSent = results.some(r => r.eventId === event.id && r.type === 'email' && r.status === 'sent')
+      const waSent = results.some(r => r.eventId === event.id && r.type === 'whatsapp' && r.status === 'sent')
+
+      if (emailSent) {
+        await sql`UPDATE events SET email_alert_sent = true WHERE id = ${event.id}`
+      }
+      if (waSent) {
+        await sql`UPDATE events SET whatsapp_alert_sent = true WHERE id = ${event.id}`
+      }
+
+      // Mark fully sent only when all configured channels are done
+      const needsEmail = sendEmail && !event.email_alert_sent
+      const needsWa = sendWhatsApp && !event.whatsapp_alert_sent
+      const emailDone = !needsEmail || emailSent || event.email_alert_sent
+      const waDone = !needsWa || waSent || event.whatsapp_alert_sent
+
+      if (emailDone && waDone) {
+        await sql`UPDATE events SET alert_status = 'sent' WHERE id = ${event.id}`
+        console.log('[v0] Evento completamente enviado:', event.title)
+      } else {
+        console.log('[v0] Evento parcialmente enviado (queda pendiente):', event.title, { emailDone, waDone })
+      }
       sentCount++
     }
 
