@@ -158,7 +158,9 @@ app.put('/api/events/:id', verifyAdmin, async (req, res) => {
         alert_email = ${alert_email !== undefined ? alert_email : true},
         alert_whatsapp = ${alert_whatsapp !== undefined ? alert_whatsapp : false},
         alert_hours_email = ${`{${hoursEmail.join(',')}}`},
-        alert_hours_whatsapp = ${`{${hoursWa.join(',')}}`}
+        alert_hours_whatsapp = ${`{${hoursWa.join(',')}}`},
+        email_alert_sent = false,
+        whatsapp_alert_sent = false
       WHERE id = ${req.params.id} RETURNING *
     `;
     res.json(result[0]);
