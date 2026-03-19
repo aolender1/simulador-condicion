@@ -69,6 +69,7 @@ export default async function handler(req, res) {
 
   try {
     const now = new Date()
+    console.log('[v0] Cron ejecutado:', now.toISOString(), '| Hora AR:', now.toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' }))
 
     // Fetch all pending events
     const allPending = await sql`
@@ -78,12 +79,20 @@ export default async function handler(req, res) {
     `
 
     if (allPending.length === 0) {
+      console.log('[v0] No hay eventos pendientes en la DB')
       return res.json({ message: 'No hay eventos próximos', sent: 0 })
     }
 
+    console.log('[v0] Eventos pendientes encontrados:', allPending.map(e => ({
+      id: e.id, title: e.title, start_date: e.start_date,
+      hoursUntil: ((new Date(e.start_date) - now) / 3600000).toFixed(2),
+      alert_email: e.alert_email, alert_whatsapp: e.alert_whatsapp,
+      alert_hours_email: e.alert_hours_email, alert_hours_whatsapp: e.alert_hours_whatsapp
+    })))
+
     // Filter events where email OR whatsapp window is active
     // Use a 90-minute window tolerance: alert fires if hoursUntil <= target AND hoursUntil > (target - 1.5)
-    const WINDOW_TOLERANCE_HOURS = 1.5
+    const WINDOW_TOLERANCE_HOURS = 2.0
     const events = allPending.filter(event => {
       const hoursEmail = Array.isArray(event.alert_hours_email) && event.alert_hours_email.length > 0
         ? event.alert_hours_email : [24]
@@ -99,8 +108,10 @@ export default async function handler(req, res) {
     })
 
     if (events.length === 0) {
+      console.log('[v0] Ningún evento dentro de la ventana de alerta')
       return res.json({ message: 'No hay eventos dentro de las ventanas de alerta', sent: 0 })
     }
+    console.log('[v0] Eventos en ventana:', events.map(e => e.title))
 
     const contacts = await sql`SELECT email, phone FROM contacts`
     const emails = contacts.map(c => c.email).filter(e => e && e.trim() !== '')
