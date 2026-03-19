@@ -199,7 +199,15 @@ export default async function handler(req, res) {
         }
       }
 
-      await sql`UPDATE events SET alert_status = 'sent' WHERE id = ${event.id}`
+      // Only mark as sent if at least one notification was actually attempted
+      const eventResults = results.filter(r => r.type === 'email' || r.type === 'whatsapp')
+      const anySent = eventResults.some(r => r.status === 'sent')
+      if (anySent) {
+        await sql`UPDATE events SET alert_status = 'sent' WHERE id = ${event.id}`
+        console.log('[v0] Evento marcado como enviado:', event.title)
+      } else {
+        console.log('[v0] Evento NO marcado como enviado (sin envíos exitosos):', event.title, results)
+      }
       sentCount++
     }
 
