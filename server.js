@@ -281,10 +281,11 @@ app.post('/api/events/:id/alert', verifyAdmin, async (req, res) => {
       }
     }
 
-    await sql`UPDATE events SET alert_status = 'sent' WHERE id = ${req.params.id}`;
     const sentCount = results.filter(r => r.status === 'sent').length;
-    res.json({ success: true, message: `Alerta enviada (${sentCount} envío/s exitoso/s)`, results });
-  } catch (error) {
+    if (sentCount > 0) {
+      await sql`UPDATE events SET alert_status = 'sent' WHERE id = ${req.params.id}`;
+    }
+    res.json({ success: true, message: `Alerta enviada (${sentCount} envío/s exitoso/s)`, results });  } catch (error) {
     console.error('Alert error:', error);
 
     // Manejar error específico de Resend (dominio de prueba)
