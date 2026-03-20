@@ -71,6 +71,12 @@ export default async function handler(req, res) {
     const now = new Date()
     console.log('[v0] Cron ejecutado:', now.toISOString(), '| Hora AR:', now.toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' }))
 
+    // Auto-delete events that have ended — runs always, regardless of pending alerts
+    const deleted = await sql`DELETE FROM events WHERE end_date < ${now.toISOString()} RETURNING id, title`
+    if (deleted.length > 0) {
+      console.log('[v0] Eventos eliminados automáticamente:', deleted.map(e => e.title))
+    }
+
     // Fetch all pending events — an event is pending if at least one channel hasn't been sent yet
     const allPending = await sql`
       SELECT * FROM events 
@@ -231,12 +237,6 @@ export default async function handler(req, res) {
         console.log('[v0] Estado actualizado:', event.title, '->', newStatus)
       }
       sentCount++
-    }
-
-    // Auto-delete events that have ended
-    const deleted = await sql`DELETE FROM events WHERE end_date < ${now.toISOString()} RETURNING id, title`
-    if (deleted.length > 0) {
-      console.log('[v0] Eventos eliminados automáticamente:', deleted.map(e => e.title))
     }
 
     res.json({ message: 'Alertas procesadas', sent: sentCount, results, deleted: deleted.length })
