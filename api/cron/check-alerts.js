@@ -77,10 +77,13 @@ export default async function handler(req, res) {
       console.log('[v0] Eventos eliminados automáticamente:', deleted.map(e => e.title))
     }
 
-    // Fetch all pending events — an event is pending if at least one channel hasn't been sent yet
+    // Fetch all pending events — an event is pending if at least one channel hasn't been sent yet.
+    // IMPORTANT: must also include 'email_sent' and 'whatsapp_sent' statuses, because when the email
+    // fires first (e.g. 12h before), the status becomes 'email_sent'. If we only query 'pending',
+    // the WhatsApp alert (e.g. 2h before) will never be evaluated.
     const allPending = await sql`
       SELECT * FROM events 
-      WHERE alert_status = 'pending' 
+      WHERE alert_status IN ('pending', 'email_sent', 'whatsapp_sent')
       AND start_date > ${now.toISOString()}
       AND (email_alert_sent = false OR whatsapp_alert_sent = false)
     `
