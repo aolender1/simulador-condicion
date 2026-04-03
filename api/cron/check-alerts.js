@@ -113,12 +113,10 @@ export default async function handler(req, res) {
       return defaultVal
     }
 
-    // WINDOW_TOLERANCE_HOURS defines how wide the alert window is.
-    // Set to 1.25h (75 min) to safely cover a 1h cron interval even if the cron runs up to
-    // ~15 min early or late. Must be < the smallest gap between any two alert hours to avoid
-    // firing the same channel twice (e.g. if email=3h and WA=2h, gap=1h — 1.25h would overlap;
-    // in that case reduce tolerance or space alert hours further apart).
-    const WINDOW_TOLERANCE_HOURS = 1.25
+    // WINDOW_TOLERANCE_HOURS: with cron every 30min, 0.75h (45min) window guarantees
+    // at least one execution lands inside any alert window, with safe margin against
+    // double-firing even if two alert hours are 1h apart.
+    const WINDOW_TOLERANCE_HOURS = 0.75
     const events = allPending.filter(event => {
       const hoursEmail = parseHours(event.alert_hours_email, [24])
       const hoursWhatsapp = parseHours(event.alert_hours_whatsapp, [2])
