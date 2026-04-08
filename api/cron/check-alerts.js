@@ -97,7 +97,9 @@ export default async function handler(req, res) {
       id: e.id, title: e.title, start_date: e.start_date,
       hoursUntil: ((new Date(e.start_date) - now) / 3600000).toFixed(2),
       alert_email: e.alert_email, alert_whatsapp: e.alert_whatsapp,
-      alert_hours_email: e.alert_hours_email, alert_hours_whatsapp: e.alert_hours_whatsapp
+      alert_hours_email: e.alert_hours_email, alert_hours_whatsapp: e.alert_hours_whatsapp,
+      email_alert_sent: e.email_alert_sent, whatsapp_alert_sent: e.whatsapp_alert_sent,
+      alert_status: e.alert_status
     })))
 
     // Helper to safely parse alert_hours fields (can come as array or JSON string from DB)
@@ -117,15 +119,36 @@ export default async function handler(req, res) {
     // at least one execution lands inside any alert window, with safe margin against
     // double-firing even if two alert hours are 1h apart.
     const WINDOW_TOLERANCE_HOURS = 0.75
+    
     const events = allPending.filter(event => {
       const hoursEmail = parseHours(event.alert_hours_email, [24])
       const hoursWhatsapp = parseHours(event.alert_hours_whatsapp, [2])
       const msUntil = new Date(event.start_date) - now
       const hoursUntilEvent = msUntil / (1000 * 60 * 60)
-      const emailActive = !event.email_alert_sent && (event.alert_email === true || event.alert_email === 'true') &&
-        hoursEmail.some(h => hoursUntilEvent <= h && hoursUntilEvent > (h - WINDOW_TOLERANCE_HOURS))
-      const waActive = !event.whatsapp_alert_sent && (event.alert_whatsapp === true || event.alert_whatsapp === 'true') &&
-        hoursWhatsapp.some(h => hoursUntilEvent <= h && hoursUntilEvent > (h - WINDOW_TOLERANCE_HOURS))
+      
+      // RETRY LOGIC: If alert time has passed but it wasn't sent yet (due to 500 error or any failure),
+      // keep trying until it finally sends or the event starts. This provides resilience against
+      // temporary failures (DB, API, network issues).
+      
+      const emailConfigured = event.alert_email === true || event.alert_email === 'true'
+      const waConfigured = event.alert_whatsapp === true || event.alert_whatsapp === 'true'
+      
+      // Email should fire if:
+      // 1. Not sent yet AND configured AND within normal window, OR
+      // 2. Not sent yet AND configured AND we're past the alert hour (retry mode)
+      const maxEmailHour = Math.max(...hoursEmail)
+      const emailInWindow = hoursEmail.some(h => hoursUntilEvent <= h && hoursUntilEvent > (h - WINDOW_TOLERANCE_HOURS))
+      const emailPastDue = hoursUntilEvent < maxEmailHour // We're past the alert time, keep retrying
+      const emailActive = !event.email_alert_sent && emailConfigured && (emailInWindow || emailPastDue)
+      
+      // WhatsApp should fire if:
+      // 1. Not sent yet AND configured AND within normal window, OR
+      // 2. Not sent yet AND configured AND we're past the alert hour (retry mode)
+      const maxWaHour = Math.max(...hoursWhatsapp)
+      const waInWindow = hoursWhatsapp.some(h => hoursUntilEvent <= h && hoursUntilEvent > (h - WINDOW_TOLERANCE_HOURS))
+      const waPastDue = hoursUntilEvent < maxWaHour // We're past the alert time, keep retrying
+      const waActive = !event.whatsapp_alert_sent && waConfigured && (waInWindow || waPastDue)
+      
       return emailActive || waActive
     })
 
@@ -163,11 +186,28 @@ export default async function handler(req, res) {
       const sendWhatsApp = event.alert_whatsapp === true || event.alert_whatsapp === 'true'
       const hoursEmail = parseHours(event.alert_hours_email, [24])
       const hoursWhatsapp = parseHours(event.alert_hours_whatsapp, [2])
+      
+      // Same retry logic: send if in window OR if past due (retry mode)
+      const maxEmailHour = Math.max(...hoursEmail)
+      const maxWaHour = Math.max(...hoursWhatsapp)
       const emailInWindow = hoursEmail.some(h => hoursUntilExact <= h && hoursUntilExact > (h - WINDOW_TOLERANCE_HOURS))
+      const emailPastDue = hoursUntilExact < maxEmailHour
       const waInWindow = hoursWhatsapp.some(h => hoursUntilExact <= h && hoursUntilExact > (h - WINDOW_TOLERANCE_HOURS))
+      const waPastDue = hoursUntilExact < maxWaHour
+      
+      const shouldSendEmail = sendEmail && !event.email_alert_sent && (emailInWindow || emailPastDue)
+      const shouldSendWa = sendWhatsApp && !event.whatsapp_alert_sent && (waInWindow || waPastDue)
+      
+      // Log retry mode for debugging
+      if (shouldSendEmail && emailPastDue && !emailInWindow) {
+        console.log(`[v0] RETRY MODE - Email para "${event.title}" (faltan ${hoursUntilExact.toFixed(2)}h, debió enviarse hace ${(maxEmailHour - hoursUntilExact).toFixed(2)}h)`)
+      }
+      if (shouldSendWa && waPastDue && !waInWindow) {
+        console.log(`[v0] RETRY MODE - WhatsApp para "${event.title}" (faltan ${hoursUntilExact.toFixed(2)}h, debió enviarse hace ${(maxWaHour - hoursUntilExact).toFixed(2)}h)`)
+      }
 
       // --- Email ---
-      if (sendEmail && emailInWindow && emails.length > 0) {
+      if (shouldSendEmail && emails.length > 0) {
         const emailSubject = `[RECORDATORIO ${hoursUntil}h] ${event.materia}: ${event.title}`
         const emailHtml = `
           <h2>Recordatorio de Evento</h2>
@@ -188,13 +228,14 @@ export default async function handler(req, res) {
             })
             results.push({ eventId: event.id, type: 'email', to: email, status: 'sent' })
           } catch (err) {
+            console.error(`[v0] ERROR enviando email a ${email} para evento "${event.title}":`, err.message)
             results.push({ eventId: event.id, type: 'email', to: email, status: 'error', error: err.message })
           }
         }
       }
 
       // --- WhatsApp ---
-      if (sendWhatsApp && waInWindow && phoneContacts.length > 0) {
+      if (shouldSendWa && phoneContacts.length > 0) {
         for (const contact of phoneContacts) {
           try {
             await sendWhatsAppMessage(contact.phone, whatsappTemplateName, [
@@ -205,6 +246,7 @@ export default async function handler(req, res) {
             ])
             results.push({ eventId: event.id, type: 'whatsapp', to: contact.phone, status: 'sent' })
           } catch (err) {
+            console.error(`[v0] ERROR enviando WhatsApp a ${contact.phone} para evento "${event.title}":`, err.message)
             results.push({ eventId: event.id, type: 'whatsapp', to: contact.phone, status: 'error', error: err.message })
           }
         }
