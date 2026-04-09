@@ -30,6 +30,7 @@ function EventsManager() {
   const [form, setForm] = useState({
     materia: MATERIAS[0],
     title: '',
+    event_link: '',
     start_date: '',
     start_time: '',
     end_date: '',
@@ -91,6 +92,7 @@ function EventsManager() {
     setForm({
       materia: MATERIAS[0],
       title: '',
+      event_link: '',
       start_date: '',
       start_time: '',
       end_date: '',
@@ -130,6 +132,7 @@ function EventsManager() {
       setForm({
         materia: event.materia,
         title: event.title,
+        event_link: event.event_link || '',
         start_date: formatLocalDate(startDate),
         start_time: formatLocalTime(startDate),
         end_date: formatLocalDate(endDate),
@@ -387,6 +390,15 @@ function EventsManager() {
                   required
                   rows="3"
                   placeholder="Ej: Examen Parcial - Unidad 1 y 2"
+                />
+              </div>
+              <div className="form-group">
+                <label>Link del Evento (privado - solo en notificaciones)</label>
+                <input
+                  type="url"
+                  value={form.event_link}
+                  onChange={e => setForm({ ...form, event_link: e.target.value })}
+                  placeholder="https://zoom.us/j/123456789 (opcional)"
                 />
               </div>
               <div className="form-group">

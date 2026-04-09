@@ -214,6 +214,7 @@ export default async function handler(req, res) {
           <p><strong>Faltan aproximadamente ${hoursUntil} horas</strong></p>
           <p><strong>Materia:</strong> ${event.materia}</p>
           <p><strong>Evento:</strong> ${event.title}</p>
+          ${event.event_link ? `<p><strong>Link del Evento:</strong> <a href="${event.event_link}" target="_blank">${event.event_link}</a></p>` : ''}
           <p><strong>Fecha y hora:</strong> ${startDate}</p>
           <hr>
           <p>Calendario UNSL</p>
