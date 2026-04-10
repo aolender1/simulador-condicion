@@ -208,6 +208,7 @@ export default async function handler(req, res) {
 
       // --- Email ---
       if (shouldSendEmail && emails.length > 0) {
+        console.log(`[v0] Preparando email para "${event.title}", event_link: ${event.event_link || 'NO DEFINIDO'}`)
         const emailSubject = `[RECORDATORIO ${hoursUntil}h] ${event.materia}: ${event.title}`
         const emailHtml = `
           <h2>Recordatorio de Evento</h2>
