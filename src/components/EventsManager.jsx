@@ -129,12 +129,15 @@ function EventsManager() {
         return `${hours}:${minutes}`
       }
 
+      // If start_date equals end_date it was saved as a point-in-time event (no explicit start)
+      const hasExplicitStart = event.start_date !== event.end_date
+
       setForm({
         materia: event.materia,
         title: event.title,
         event_link: event.event_link || '',
-        start_date: formatLocalDate(startDate),
-        start_time: formatLocalTime(startDate),
+        start_date: hasExplicitStart ? formatLocalDate(startDate) : '',
+        start_time: hasExplicitStart ? formatLocalTime(startDate) : '',
         end_date: formatLocalDate(endDate),
         end_time: formatLocalTime(endDate),
         color: event.color,
@@ -159,18 +162,22 @@ function EventsManager() {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    // Crear fechas en zona horaria local
-    const startLocal = new Date(`${form.start_date}T${form.start_time}:00`)
+    // Crear fecha de fin en zona horaria local (requerida)
     const endLocal = new Date(`${form.end_date}T${form.end_time}:00`)
 
-    // Validar que la fecha de inicio sea anterior a la fecha de fin
-    if (startLocal >= endLocal) {
-      setModalError('La fecha y hora de inicio debe ser anterior a la fecha y hora de fin')
-      return
+    // Fecha de inicio es opcional: si se completa, debe ser anterior a la de fin
+    let startLocal = null
+    if (form.start_date && form.start_time) {
+      startLocal = new Date(`${form.start_date}T${form.start_time}:00`)
+      if (startLocal >= endLocal) {
+        setModalError('La fecha y hora de inicio debe ser anterior a la fecha y hora de fin')
+        return
+      }
     }
 
     // Convertir a ISO string (UTC) para guardar en la DB
-    const start_date = startLocal.toISOString()
+    // Si no hay inicio, se usa la fecha de fin como inicio (evento puntual)
+    const start_date = startLocal ? startLocal.toISOString() : endLocal.toISOString()
     const end_date = endLocal.toISOString()
 
     const payload = {
@@ -393,32 +400,31 @@ function EventsManager() {
                 />
               </div>
               <div className="form-group">
-                <label>Link del Evento (privado - solo en notificaciones)</label>
+                <label>Link del Evento <span style={{ fontWeight: 'normal', fontSize: '0.82rem', color: '#888' }}>(privado - solo en notificaciones, opcional)</span></label>
                 <input
                   type="url"
                   value={form.event_link}
                   onChange={e => setForm({ ...form, event_link: e.target.value })}
-                  placeholder="https://zoom.us/j/123456789 (opcional)"
+                  placeholder="https://zoom.us/j/123456789"
+                  style={{ width: '100%', boxSizing: 'border-box' }}
                 />
               </div>
               <div className="form-group">
-                <label>Fecha Inicio</label>
+                <label>Fecha Inicio <span style={{ fontWeight: 'normal', fontSize: '0.82rem', color: '#888' }}>(opcional)</span></label>
                 <input
                   type="date"
                   value={form.start_date}
                   onChange={e => setForm({ ...form, start_date: e.target.value })}
-                  required
                   min={minDate}
                   max="2029-12-31"
                 />
               </div>
               <div className="form-group">
-                <label>Hora Inicio</label>
+                <label>Hora Inicio <span style={{ fontWeight: 'normal', fontSize: '0.82rem', color: '#888' }}>(opcional)</span></label>
                 <input
                   type="time"
                   value={form.start_time}
                   onChange={e => setForm({ ...form, start_time: e.target.value })}
-                  required
                 />
               </div>
               <div className="form-group">
