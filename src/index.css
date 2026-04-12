@@ -1236,13 +1236,46 @@ footer a:hover {
         font-size: 0.82rem !important;
     }
 
+    /* Month view: compact cells that don't stretch */
+    .fc .fc-daygrid-day {
+        height: auto !important;
+        min-height: 48px !important;
+    }
+
+    .fc .fc-daygrid-day-frame {
+        min-height: 48px !important;
+    }
+
+    .fc .fc-daygrid-body {
+        width: 100% !important;
+    }
+
+    .fc .fc-daygrid-day-events {
+        margin-bottom: 0 !important;
+    }
+
+    .fc .fc-daygrid-event-harness {
+        margin-top: 1px !important;
+    }
+
+    /* Shrink day numbers */
+    .fc .fc-daygrid-day-number {
+        font-size: 0.75rem;
+        padding: 2px 4px !important;
+    }
+
+    .fc .fc-col-header-cell-cushion {
+        font-size: 0.75rem;
+        padding: 4px 2px !important;
+    }
+
     /* In month view, shrink event text */
     .fc-event-time {
-        font-size: 0.75em;
+        font-size: 0.72em;
     }
 
     .fc-event-title {
-        font-size: 0.78em;
+        font-size: 0.72em;
         line-height: 1.2;
     }
 

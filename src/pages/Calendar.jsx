@@ -102,7 +102,7 @@ function Calendar() {
             <span></span><span></span><span></span>
           </span>
         </button>
-        <h1>Cronograma y Simulador de Condicion para la Licenciatura en Analisis y Gestion de Datos</h1>
+        <h1>Licenciatura en Analisis y Gestion de Datos - UNSL</h1>
         <div className="header-actions">
           <Link to="/login" className="admin-link">⚙️</Link>
           <button className="theme-btn" onClick={toggleTheme}>{isDark ? '☀️' : '🌙'}</button>
@@ -171,6 +171,7 @@ function Calendar() {
                       completedEvents.includes(arg.event.id) ? ['completed'] : []
                     }
                     eventContent={(arg) => {
+                      const isMobile = window.innerWidth < 640
                       let time = '';
                       if (arg.event.start) {
                         time = new Date(arg.event.start).toLocaleTimeString('es-AR', {
@@ -178,6 +179,26 @@ function Calendar() {
                           minute: '2-digit',
                           hour12: false
                         });
+                      }
+                      // On mobile month view: show only the hour dot to avoid overflow
+                      if (isMobile && arg.view.type === 'dayGridMonth') {
+                        return (
+                          <div style={{
+                            backgroundColor: arg.event.backgroundColor,
+                            color: 'white',
+                            borderRadius: '3px',
+                            padding: '1px 3px',
+                            fontSize: '0.7em',
+                            fontWeight: 'bold',
+                            overflow: 'hidden',
+                            whiteSpace: 'nowrap',
+                            textOverflow: 'ellipsis',
+                            width: '100%',
+                            lineHeight: '1.4'
+                          }}>
+                            {time}
+                          </div>
+                        );
                       }
                       return (
                         <div className="fc-event-main-frame" style={{ backgroundColor: arg.event.backgroundColor, borderColor: arg.event.borderColor, color: 'white', padding: '2px 4px', borderRadius: '3px', width: '100%', overflow: 'hidden' }}>
