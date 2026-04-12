@@ -14,6 +14,7 @@ function Calendar() {
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark')
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [viewMode, setViewMode] = useState('calendar')
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [completedEvents, setCompletedEvents] = useState(() => {
     const saved = localStorage.getItem('completedEvents')
     return saved ? JSON.parse(saved) : []
@@ -92,7 +93,16 @@ function Calendar() {
   return (
     <div className="app-wrapper">
       <header>
-        <h1>Cronograma y Simulador de Condicion para la Licenciatura en Analisis y Gestion de Datos</h1>
+        <button
+          className="hamburger-btn"
+          onClick={() => setMobileMenuOpen(prev => !prev)}
+          aria-label="Abrir menú"
+        >
+          <span className={`hamburger-icon ${mobileMenuOpen ? 'open' : ''}`}>
+            <span></span><span></span><span></span>
+          </span>
+        </button>
+        <h1>Licenciatura en Analisis y Gestion de Datos - UNSL</h1>
         <div className="header-actions">
           <Link to="/login" className="admin-link">⚙️</Link>
           <button className="theme-btn" onClick={toggleTheme}>{isDark ? '☀️' : '🌙'}</button>
@@ -100,22 +110,22 @@ function Calendar() {
       </header>
 
       <div className="main-layout">
-        <aside className="app-sidebar">
+        <aside className={`app-sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
           <button
             className={`sidebar-btn ${viewMode === 'calendar' ? 'active' : ''}`}
-            onClick={() => setViewMode('calendar')}
+            onClick={() => { setViewMode('calendar'); setMobileMenuOpen(false) }}
           >
             📅 Calendario de Eventos
           </button>
           <button
             className={`sidebar-btn ${viewMode === 'studyplan' ? 'active' : ''}`}
-            onClick={() => setViewMode('studyplan')}
+            onClick={() => { setViewMode('studyplan'); setMobileMenuOpen(false) }}
           >
             📚 Correlatividades
           </button>
           <button
             className={`sidebar-btn ${viewMode === 'calculadora' ? 'active' : ''}`}
-            onClick={() => setViewMode('calculadora')}
+            onClick={() => { setViewMode('calculadora'); setMobileMenuOpen(false) }}
           >
             🧮 Calculadora de Condición
           </button>
@@ -124,6 +134,7 @@ function Calendar() {
             target="_blank"
             rel="noopener noreferrer"
             className="sidebar-btn link-btn"
+            onClick={() => setMobileMenuOpen(false)}
           >
             📆 Calendario Oficial 2026
           </a>
@@ -137,10 +148,14 @@ function Calendar() {
                   <h3>Calendario de Eventos</h3>
                   <FullCalendar
                     plugins={[dayGridPlugin, timeGridPlugin, listPlugin]}
-                    initialView="dayGridMonth"
+                    initialView={window.innerWidth < 640 ? 'listMonth' : 'dayGridMonth'}
                     locale={esLocale}
                     timeZone="local"
-                    headerToolbar={{
+                    headerToolbar={window.innerWidth < 640 ? {
+                      left: 'prev,next',
+                      center: 'title',
+                      right: 'dayGridMonth,listMonth'
+                    } : {
                       left: 'prev,next today',
                       center: 'title',
                       right: 'dayGridMonth,timeGridWeek,listMonth'
@@ -153,12 +168,16 @@ function Calendar() {
                       prev: '◀',
                       next: '▶'
                     }}
+                    slotMinTime="07:00:00"
+                    slotMaxTime="24:00:00"
+                    scrollTime="08:00:00"
                     events={events}
                     eventClick={handleEventClick}
                     eventClassNames={(arg) =>
                       completedEvents.includes(arg.event.id) ? ['completed'] : []
                     }
                     eventContent={(arg) => {
+                      const isMobile = window.innerWidth < 640
                       let time = '';
                       if (arg.event.start) {
                         time = new Date(arg.event.start).toLocaleTimeString('es-AR', {
@@ -166,6 +185,26 @@ function Calendar() {
                           minute: '2-digit',
                           hour12: false
                         });
+                      }
+                      // On mobile month view: show only the hour dot to avoid overflow
+                      if (isMobile && arg.view.type === 'dayGridMonth') {
+                        return (
+                          <div style={{
+                            backgroundColor: arg.event.backgroundColor,
+                            color: 'white',
+                            borderRadius: '3px',
+                            padding: '1px 3px',
+                            fontSize: '0.7em',
+                            fontWeight: 'bold',
+                            overflow: 'hidden',
+                            whiteSpace: 'nowrap',
+                            textOverflow: 'ellipsis',
+                            width: '100%',
+                            lineHeight: '1.4'
+                          }}>
+                            {time}
+                          </div>
+                        );
                       }
                       return (
                         <div className="fc-event-main-frame" style={{ backgroundColor: arg.event.backgroundColor, borderColor: arg.event.borderColor, color: 'white', padding: '2px 4px', borderRadius: '3px', width: '100%', overflow: 'hidden' }}>
