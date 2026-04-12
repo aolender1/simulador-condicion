@@ -1076,3 +1076,193 @@ footer a:hover {
     opacity: 0.6;
     text-decoration: line-through;
 }
+
+/* ========================================
+   SIDEBAR / MAIN LAYOUT
+   ======================================== */
+
+.main-layout {
+    display: flex;
+    flex: 1;
+}
+
+.app-sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background-color: var(--container-bg);
+    border-right: 1px solid var(--border-color);
+    padding: 1rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.sidebar-btn {
+    width: 100%;
+    text-align: left;
+    padding: 0.75rem 1rem;
+    background: none;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    color: var(--text-color);
+    cursor: pointer;
+    margin-top: 0;
+    transition: background 0.2s;
+    text-decoration: none;
+    display: block;
+}
+
+.sidebar-btn:hover {
+    background-color: var(--input-bg);
+}
+
+.sidebar-btn.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.link-btn {
+    color: var(--text-color);
+}
+
+.app-content {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* ========================================
+   HAMBURGER BUTTON (hidden on desktop)
+   ======================================== */
+
+.hamburger-btn {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    width: auto;
+    margin: 0;
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 200;
+}
+
+.hamburger-icon {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: 24px;
+}
+
+.hamburger-icon span {
+    display: block;
+    height: 2px;
+    background-color: white;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+    transform-origin: center;
+}
+
+/* Animated X when open */
+.hamburger-icon.open span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+.hamburger-icon.open span:nth-child(2) {
+    opacity: 0;
+}
+.hamburger-icon.open span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ========================================
+   MOBILE STYLES
+   ======================================== */
+
+@media (max-width: 640px) {
+    header {
+        padding: 12px 15px 12px 50px;
+    }
+
+    header h1 {
+        font-size: 0.85rem;
+        padding: 0 40px 0 0;
+    }
+
+    .hamburger-btn {
+        display: block;
+    }
+
+    /* Sidebar hidden by default on mobile, slides in as overlay */
+    .app-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 260px;
+        z-index: 150;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        padding-top: 70px;
+        box-shadow: 4px 0 20px rgba(0,0,0,0.3);
+        overflow-y: auto;
+    }
+
+    .app-sidebar.mobile-open {
+        transform: translateX(0);
+    }
+
+    /* Content takes full width */
+    .app-content {
+        width: 100%;
+    }
+
+    /* Calendar toolbar: compact layout */
+    .fc .fc-toolbar {
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 4px 0;
+    }
+
+    .fc .fc-toolbar-title {
+        font-size: 1rem !important;
+    }
+
+    .fc .fc-button {
+        padding: 0.3em 0.55em !important;
+        font-size: 0.82rem !important;
+    }
+
+    /* In month view, shrink event text */
+    .fc-event-time {
+        font-size: 0.75em;
+    }
+
+    .fc-event-title {
+        font-size: 0.78em;
+        line-height: 1.2;
+    }
+
+    /* List view styling */
+    .fc .fc-list-event td {
+        padding: 6px 8px;
+        font-size: 0.88rem;
+    }
+
+    .fc .fc-list-day-cushion {
+        padding: 6px 10px;
+        font-size: 0.88rem;
+    }
+
+    .calendar-container {
+        padding: 10px 8px;
+        border-radius: 0;
+    }
+
+    .calendar-section {
+        padding: 0;
+    }
+}
