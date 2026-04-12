@@ -151,7 +151,11 @@ function Calendar() {
                     initialView={window.innerWidth < 640 ? 'listMonth' : 'dayGridMonth'}
                     locale={esLocale}
                     timeZone="local"
-                    headerToolbar={{
+                    headerToolbar={window.innerWidth < 640 ? {
+                      left: 'prev,next',
+                      center: 'title',
+                      right: 'dayGridMonth,listMonth'
+                    } : {
                       left: 'prev,next today',
                       center: 'title',
                       right: 'dayGridMonth,timeGridWeek,listMonth'

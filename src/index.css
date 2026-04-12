@@ -1238,6 +1238,11 @@ footer a:hover {
         width: 100%;
     }
 
+    /* Hide weekly view button on mobile — too cramped to be usable */
+    .fc .fc-timeGridWeek-button {
+        display: none !important;
+    }
+
     /* Calendar toolbar: compact layout */
     .fc .fc-toolbar {
         flex-wrap: wrap;
