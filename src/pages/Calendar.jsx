@@ -152,9 +152,9 @@ function Calendar() {
                     locale={esLocale}
                     timeZone="local"
                     headerToolbar={{
-                      left: 'prev,next',
+                      left: 'prev,next today',
                       center: 'title',
-                      right: 'dayGridMonth,listMonth'
+                      right: 'dayGridMonth,timeGridWeek,listMonth'
                     }}
                     buttonText={{
                       today: 'Hoy',
@@ -164,7 +164,9 @@ function Calendar() {
                       prev: '◀',
                       next: '▶'
                     }}
-
+                    slotMinTime="07:00:00"
+                    slotMaxTime="24:00:00"
+                    scrollTime="08:00:00"
                     events={events}
                     eventClick={handleEventClick}
                     eventClassNames={(arg) =>
