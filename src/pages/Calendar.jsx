@@ -28,18 +28,39 @@ function Calendar() {
     fetch('/api/events')
       .then(res => res.json())
       .then(data => {
-        const formatted = data.map(e => ({
-          id: e.id,
-          title: e.title,
-          start: e.start_date,
-          end: e.end_date,
-          backgroundColor: e.color,
-          borderColor: e.color,
-          extendedProps: {
-            materia: e.materia,
-            estado_alerta: e.estado_alerta
+        const formatted = data.map(e => {
+          const startTs = new Date(e.start_date).getTime()
+          const endTs = new Date(e.end_date).getTime()
+          const sameDateTime = startTs === endTs
+
+          const startDateObj = new Date(e.start_date)
+          const endDateObj = new Date(e.end_date)
+
+          // FullCalendar treats `end` as exclusive and may push an event into the next day
+          // if the end time is late (e.g. 23:59). To prevent this, when start and end fall
+          // on the same calendar day, we pass end as null so FullCalendar renders it as a
+          // single-day event without bleeding into the next column.
+          const sameCalendarDay =
+            startDateObj.getFullYear() === endDateObj.getFullYear() &&
+            startDateObj.getMonth() === endDateObj.getMonth() &&
+            startDateObj.getDate() === endDateObj.getDate()
+
+          return {
+            id: e.id,
+            title: e.title,
+            start: sameDateTime ? e.end_date : e.start_date,
+            end: (sameDateTime || sameCalendarDay) ? null : e.end_date,
+            backgroundColor: e.color,
+            borderColor: e.color,
+            extendedProps: {
+              materia: e.materia,
+              estado_alerta: e.estado_alerta,
+              startDate: e.start_date,
+              endDate: e.end_date,
+              sameDateTime
+            }
           }
-        }))
+        })
         setEvents(formatted)
       })
       .catch(err => console.error('Error loading events:', err))
@@ -57,8 +78,11 @@ function Calendar() {
       id: event.id,
       title: event.title,
       materia: event.extendedProps.materia,
-      start: event.start,
-      end: event.end,
+      start: new Date(event.extendedProps.endDate),
+      end: event.extendedProps.sameDateTime ? null : new Date(event.extendedProps.endDate),
+      startDate: new Date(event.extendedProps.startDate),
+      endDate: new Date(event.extendedProps.endDate),
+      sameDateTime: event.extendedProps.sameDateTime,
       color: event.backgroundColor
     })
   }
@@ -243,14 +267,17 @@ function Calendar() {
                 <span className="modal-icon">📅</span>
                 <div>
                   <strong>Fecha</strong>
-                  <p>{formatDate(selectedEvent.start)}</p>
+                  <p>{formatDate(selectedEvent.endDate)}</p>
                 </div>
               </div>
               <div className="modal-detail-item">
                 <span className="modal-icon">🕐</span>
                 <div>
                   <strong>Hora</strong>
-                  <p>{formatTime(selectedEvent.start)} - {formatTime(selectedEvent.end)}</p>
+                  {selectedEvent.sameDateTime
+                    ? <p>{formatTime(selectedEvent.endDate)}</p>
+                    : <p>{formatTime(selectedEvent.startDate)} - {formatTime(selectedEvent.endDate)}</p>
+                  }
                 </div>
               </div>
             </div>
