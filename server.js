@@ -123,13 +123,13 @@ app.get('/api/events', async (req, res) => {
 
 app.post('/api/events', verifyAdmin, async (req, res) => {
   try {
-    const { materia, title, start_date, end_date, color, alert_status, alert_email, alert_whatsapp, alert_hours_email, alert_hours_whatsapp } = req.body;
+    const { materia, title, event_link, start_date, end_date, color, alert_status, alert_email, alert_whatsapp, alert_hours_email, alert_hours_whatsapp } = req.body;
     const hoursEmail = Array.isArray(alert_hours_email) ? alert_hours_email : (alert_hours_email ? JSON.parse(alert_hours_email) : [24]);
     const hoursWa = Array.isArray(alert_hours_whatsapp) ? alert_hours_whatsapp : (alert_hours_whatsapp ? JSON.parse(alert_hours_whatsapp) : [2]);
     const result = await sql`
-      INSERT INTO events (materia, title, start_date, end_date, color, alert_status, alert_email, alert_whatsapp, alert_hours_email, alert_hours_whatsapp)
+      INSERT INTO events (materia, title, event_link, start_date, end_date, color, alert_status, alert_email, alert_whatsapp, alert_hours_email, alert_hours_whatsapp)
       VALUES (
-        ${materia}, ${title}, ${start_date}, ${end_date}, ${color},
+        ${materia}, ${title}, ${event_link || null}, ${start_date}, ${end_date}, ${color},
         ${alert_status || 'pending'},
         ${alert_email !== undefined ? alert_email : true},
         ${alert_whatsapp !== undefined ? alert_whatsapp : false},
@@ -147,12 +147,12 @@ app.post('/api/events', verifyAdmin, async (req, res) => {
 
 app.put('/api/events/:id', verifyAdmin, async (req, res) => {
   try {
-    const { materia, title, start_date, end_date, color, alert_status, alert_email, alert_whatsapp, alert_hours_email, alert_hours_whatsapp } = req.body;
+    const { materia, title, event_link, start_date, end_date, color, alert_status, alert_email, alert_whatsapp, alert_hours_email, alert_hours_whatsapp } = req.body;
     const hoursEmail = Array.isArray(alert_hours_email) ? alert_hours_email : (alert_hours_email ? JSON.parse(alert_hours_email) : [24]);
     const hoursWa = Array.isArray(alert_hours_whatsapp) ? alert_hours_whatsapp : (alert_hours_whatsapp ? JSON.parse(alert_hours_whatsapp) : [2]);
     const result = await sql`
       UPDATE events SET
-        materia = ${materia}, title = ${title}, start_date = ${start_date},
+        materia = ${materia}, title = ${title}, event_link = ${event_link || null}, start_date = ${start_date},
         end_date = ${end_date}, color = ${color},
         alert_status = ${alert_status || 'pending'},
         alert_email = ${alert_email !== undefined ? alert_email : true},

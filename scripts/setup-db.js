@@ -25,9 +25,17 @@ async function setup() {
   // Agregar columna estado_alerta si no existe (para tablas existentes)
   try {
     await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS estado_alerta VARCHAR(20) DEFAULT 'pendiente'`
-    console.log('✓ Columna estado_alerta verificada/creada')
+    await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS alert_status VARCHAR(20) DEFAULT 'pending'`
+    await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS event_link TEXT`
+    await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS alert_email BOOLEAN DEFAULT true`
+    await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS alert_whatsapp BOOLEAN DEFAULT false`
+    await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS alert_hours_email INTEGER[] DEFAULT '{24}'`
+    await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS alert_hours_whatsapp INTEGER[] DEFAULT '{2}'`
+    await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS email_alert_sent BOOLEAN DEFAULT false`
+    await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS whatsapp_alert_sent BOOLEAN DEFAULT false`
+    console.log('✓ Columnas adicionales verificadas/creadas')
   } catch (err) {
-    console.log('Columna estado_alerta ya existe o no se pudo crear')
+    console.log('Error al verificar/crear columnas adicionales:', err)
   }
 
   console.log('✓ Tabla events verificada')
