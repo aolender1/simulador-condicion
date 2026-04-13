@@ -22,25 +22,16 @@ const StudyPlan = () => {
             return;
         }
 
-        if (e.ctrlKey || e.metaKey || e.type === 'contextmenu') {
-            toggleState(id, 'aprobada');
-        } else {
-            toggleState(id, 'regular');
-        }
-    };
-
-    const toggleState = (id, targetState) => {
         setProgress(prev => {
             const current = prev[id];
             let nextState = null;
-            if (current === targetState) {
-                nextState = null;
-            } else if (current === 'regular' && targetState === 'aprobada') {
-                nextState = 'aprobada';
-            } else if (current === 'aprobada' && targetState === 'regular') {
+            
+            if (!current || current === 'habilitada') {
                 nextState = 'regular';
-            } else {
-                nextState = targetState;
+            } else if (current === 'regular') {
+                nextState = 'aprobada';
+            } else if (current === 'aprobada') {
+                nextState = null;
             }
 
             const newProgress = { ...prev };
@@ -51,7 +42,7 @@ const StudyPlan = () => {
             }
             return newProgress;
         });
-    }
+    };
 
     const checkAvailability = (subject) => {
         if (progress[subject.id]) return progress[subject.id];
@@ -116,12 +107,6 @@ const StudyPlan = () => {
                 <div className="legend-item"><span className="dot habilitada"></span> Habilitada (para cursar)</div>
                 <div className="legend-item"><span className="dot bloqueada"></span> Bloqueada</div>
             </div>
-            <div className="instruction-box">
-                <strong>💡 ¿Cómo usar?</strong>
-                <p><strong>Click simple:</strong> Marcar como Regular.</p>
-                <p><strong>Ctrl + Click</strong> (o clic derecho): Marcar como Aprobada.</p>
-                <p>Al marcar materias, se habilitarán automáticamente aquellas cuyas correlatividades estén cumplidas.</p>
-            </div>
 
             <div className="study-grid">
                 {years.map(year => (
@@ -142,7 +127,6 @@ const StudyPlan = () => {
                                                         key={s.id}
                                                         className={`subject-card status-${status}`}
                                                         onClick={(e) => handleSubjectClick(s.id, e)}
-                                                        onContextMenu={(e) => { e.preventDefault(); handleSubjectClick(s.id, { ...e, ctrlKey: true, type: 'click' }); }}
                                                     >
                                                         <div className="subject-id-badge">{s.id}</div>
                                                         <div className="subject-name">{s.name}</div>
