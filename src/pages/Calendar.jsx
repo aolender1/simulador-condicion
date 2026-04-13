@@ -29,13 +29,19 @@ function Calendar() {
       .then(res => res.json())
       .then(data => {
         const formatted = data.map(e => {
-          // If start === end (point-in-time event, no explicit start was set),
-          // pass end as null so FullCalendar doesn't render it spanning to the next day.
-          const sameDateTime = e.start_date === e.end_date
+          // Point-in-time events (no explicit start) have start_date === end_date.
+          // Compare timestamps numerically to avoid ISO string formatting differences.
+          const startTs = new Date(e.start_date).getTime()
+          const endTs = new Date(e.end_date).getTime()
+          const sameDateTime = startTs === endTs
+
           return {
             id: e.id,
             title: e.title,
-            start: e.end_date,
+            // For point-in-time events: use end_date as start and no end,
+            // so FullCalendar renders a single-day chip without crossing to the next day.
+            // For normal events: use start_date → end_date range.
+            start: sameDateTime ? e.end_date : e.start_date,
             end: sameDateTime ? null : e.end_date,
             backgroundColor: e.color,
             borderColor: e.color,
