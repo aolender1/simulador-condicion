@@ -29,20 +29,27 @@ function Calendar() {
       .then(res => res.json())
       .then(data => {
         const formatted = data.map(e => {
-          // Point-in-time events (no explicit start) have start_date === end_date.
-          // Compare timestamps numerically to avoid ISO string formatting differences.
           const startTs = new Date(e.start_date).getTime()
           const endTs = new Date(e.end_date).getTime()
           const sameDateTime = startTs === endTs
 
+          const startDateObj = new Date(e.start_date)
+          const endDateObj = new Date(e.end_date)
+
+          // FullCalendar treats `end` as exclusive and may push an event into the next day
+          // if the end time is late (e.g. 23:59). To prevent this, when start and end fall
+          // on the same calendar day, we pass end as null so FullCalendar renders it as a
+          // single-day event without bleeding into the next column.
+          const sameCalendarDay =
+            startDateObj.getFullYear() === endDateObj.getFullYear() &&
+            startDateObj.getMonth() === endDateObj.getMonth() &&
+            startDateObj.getDate() === endDateObj.getDate()
+
           return {
             id: e.id,
             title: e.title,
-            // For point-in-time events: use end_date as start and no end,
-            // so FullCalendar renders a single-day chip without crossing to the next day.
-            // For normal events: use start_date → end_date range.
             start: sameDateTime ? e.end_date : e.start_date,
-            end: sameDateTime ? null : e.end_date,
+            end: (sameDateTime || sameCalendarDay) ? null : e.end_date,
             backgroundColor: e.color,
             borderColor: e.color,
             extendedProps: {
