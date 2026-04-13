@@ -9,18 +9,25 @@ const ALLOWED_EMAILS = [
   'rominaflorenciaramos93@gmail.com'
 ]
 
-async function verifySession(req) {
+async function verifySession(req, sql) {
   try {
-    const neonAuthUrl = process.env.VITE_NEON_AUTH_URL || process.env.NEON_AUTH_URL
-    if (!neonAuthUrl) return null
-    const sessionRes = await fetch(`${neonAuthUrl}/api/auth/get-session`, {
-      headers: { cookie: req.headers.cookie || '' }
-    })
-    if (!sessionRes.ok) return null
-    const session = await sessionRes.json()
-    const email = session?.data?.user?.email?.toLowerCase()
-    if (!email || !ALLOWED_EMAILS.includes(email)) return null
-    return session.data.user
+    // Extract better-auth session token from cookies
+    const cookieHeader = req.headers.cookie || ''
+    const match = cookieHeader.match(/(?:^|;\s*)better-auth\.session_token=([^;]+)/)
+    if (!match) return null
+    const token = decodeURIComponent(match[1])
+
+    // Validate token against neon_auth DB tables
+    const rows = await sql`
+      SELECT u.email FROM neon_auth.session s
+      JOIN neon_auth.user u ON u.id = s."userId"
+      WHERE s.token = ${token}
+        AND s."expiresAt" > NOW()
+    `
+    if (!rows.length) return null
+    const email = rows[0].email.toLowerCase()
+    if (!ALLOWED_EMAILS.includes(email)) return null
+    return { email }
   } catch {
     return null
   }
@@ -30,7 +37,7 @@ export default async function handler(req, res) {
   const sql = neon(process.env.DATABASE_URL)
   const { id } = req.query
 
-  const user = await verifySession(req)
+  const user = await verifySession(req, sql)
   if (!user) return res.status(401).json({ error: 'No autorizado' })
 
   if (req.method === 'PUT') {
