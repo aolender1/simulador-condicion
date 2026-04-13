@@ -4,10 +4,10 @@ Aplicación web para gestionar eventos académicos, contactos y envío de alerta
 
 ## ✨ Características
 
-### � Autenticación
-- Login con Google OAuth (Neon Auth)
-- Control de acceso por lista de emails permitidos
-- Sesiones persistentes
+### 🔐 Autenticación
+- Login con Google OAuth (Neon Auth).
+- Control de acceso por lista de emails permitidos.
+- Sesiones persistentes.
 
 ### 📆 Gestión de Eventos
 - Crear, editar y eliminar eventos académicos
@@ -26,11 +26,20 @@ Aplicación web para gestionar eventos académicos, contactos y envío de alerta
 - Agregar/eliminar contactos (email + teléfono)
 - Lista completa de destinatarios de alertas
 
+### 📚 Simulador de Correlatividades (Nuevo)
+- Visualización interactiva del plan de estudios.
+- **Sistema de marcado cíclico**: Regular -> Aprobada -> Pendiente (**optimizado para Mobile**).
+- Detección automática de materias habilitadas/bloqueadas según requisitos.
+- Tooltips informativos con requisitos faltantes.
+- Links directos a programas oficiales de cada materia.
+
 ### 🎨 Interfaz
-- Tema claro/oscuro
-- Diseño responsive
-- Animaciones suaves
-- Experiencia de usuario moderna
+- Tema claro/oscuro (con persistencia).
+- Diseño responsive y optimizado para mobile (PWA Ready).
+- Animaciones suaves y transiciones modernas.
+
+## 🔗 Producción
+La aplicación se encuentra desplegada en: [**https://www.unsldatos.com/**](https://www.unsldatos.com/)
 
 ## 🛠️ Stack Tecnológico
 
@@ -126,8 +135,8 @@ En el dashboard de Vercel → Settings → Environment Variables, agrega:
 ### 4. Configurar Neon Auth
 
 En Neon Console → Auth → Configuration:
-- **Allowed Redirect URLs**: `https://tu-app.vercel.app/admin`
-- **Allowed Origins**: `https://tu-app.vercel.app`
+- **Allowed Redirect URLs**: `https://www.unsldatos.com/admin`
+- **Allowed Origins**: `https://www.unsldatos.com`
 
 ### 5. (Opcional) Dominio Personalizado
 

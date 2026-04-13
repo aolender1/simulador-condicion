@@ -1,7 +1,7 @@
 export const planDeEstudios = [
     // AÑO 1 - CUATRIMESTRE 1
     // Agrega tu link de la materia dentro de 'link: ""'. Si está vacío, el botón estará oculto.
-    { id: 1, name: "Ciencia, tecnología y sociedad", year: 1, term: 1, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=47927", requirements: { cursar: [], rendir: [] } },
+    { id: 1, name: "Ciencia, tecnología y sociedad", year: 1, term: 1, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=50595", requirements: { cursar: [], rendir: [] } },
     { id: 2, name: "Introducción al álgebra", year: 1, term: 1, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=47908", requirements: { cursar: [], rendir: [] } },
     { id: 3, name: "Cálculo I", year: 1, term: 1, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=48081", requirements: { cursar: [], rendir: [] } },
 
@@ -24,12 +24,12 @@ export const planDeEstudios = [
 
     // AÑO 2 - CUATRIMESTRE 1
     {
-        id: 7, name: "Laboratorio de datos", year: 2, term: 1, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=47495", requirements: {
+        id: 7, name: "Laboratorio de datos", year: 2, term: 1, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=50258", requirements: {
             cursar: [{ id: 5, state: "regular" }, { id: 6, state: "regular" }, { id: 2, state: "aprobada" }, { id: 3, state: "aprobada" }], rendir: []
         }
     },
     {
-        id: 8, name: "Probabilidad aplicada", year: 2, term: 1, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=47865", requirements: {
+        id: 8, name: "Probabilidad aplicada", year: 2, term: 1, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=50533", requirements: {
             cursar: [{ id: 5, state: "regular" }, { id: 6, state: "regular" }, { id: 2, state: "aprobada" }, { id: 3, state: "aprobada" }], rendir: []
         }
     },
