@@ -1,11 +1,26 @@
 import { neon } from '@neondatabase/serverless'
-import jwt from 'jsonwebtoken'
 
-function verifyToken(req) {
-  const authHeader = req.headers.authorization
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return null
+const ALLOWED_EMAILS = [
+  'albertolender@gmail.com',
+  'lynchjonai@gmail.com',
+  'maxipadilla.unsl@gmail.com',
+  'supremacyaaa@gmail.com',
+  'valeriamorenoarg@gmail.com',
+  'rominaflorenciaramos93@gmail.com'
+]
+
+async function verifySession(req) {
   try {
-    return jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET)
+    const neonAuthUrl = process.env.VITE_NEON_AUTH_URL || process.env.NEON_AUTH_URL
+    if (!neonAuthUrl) return null
+    const sessionRes = await fetch(`${neonAuthUrl}/api/auth/get-session`, {
+      headers: { cookie: req.headers.cookie || '' }
+    })
+    if (!sessionRes.ok) return null
+    const session = await sessionRes.json()
+    const email = session?.data?.user?.email?.toLowerCase()
+    if (!email || !ALLOWED_EMAILS.includes(email)) return null
+    return session.data.user
   } catch {
     return null
   }
@@ -25,7 +40,7 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const user = verifyToken(req)
+    const user = await verifySession(req)
     if (!user) return res.status(401).json({ error: 'No autorizado' })
 
     const { materia, title, event_link, start_date, end_date, color, alert_status, alert_email, alert_whatsapp, alert_hours_email, alert_hours_whatsapp } = req.body
