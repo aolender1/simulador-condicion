@@ -176,15 +176,15 @@ app.post('/api/events/:id/alert', verifyAdmin, async (req, res) => {
     const emailResult = await resend.emails.send({
       from: `Calendario UNSL <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
       to: contacts.map(c => c.email),
-      subject: `Recordatorio: ${event.title}`,
+      subject: `[ALERTA] ${event.materia}: ${event.title}`,
       html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #00796b;">${event.materia}</h2>
-          <p><strong>${event.title}</strong></p>
-          <p>📅 Fecha: ${startDate}</p>
-          <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
-          <p style="color: #666; font-size: 12px;">Este es un recordatorio automático del Calendario UNSL.</p>
-        </div>
+        <h2>Recordatorio de Evento</h2>
+        <p><strong>Materia:</strong> ${event.materia}</p>
+        <p><strong>Evento:</strong> ${event.title}</p>
+        ${event.event_link ? `<p><strong>Link del Evento:</strong> <a href="${event.event_link}" target="_blank">${event.event_link}</a></p>` : ''}
+        <p><strong>Fecha y hora:</strong> ${startDate}</p>
+        <hr>
+        <p>Calendario UNSL</p>
       `
     });
 
