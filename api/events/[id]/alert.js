@@ -1,8 +1,6 @@
 import { neon } from '@neondatabase/serverless'
 import { Resend } from 'resend'
 
-const ALLOWED_EMAILS = (process.env.ALLOWED_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
-
 async function verifySession(req, sql) {
   try {
     const cookieHeader = req.headers.cookie || ''
@@ -11,15 +9,14 @@ async function verifySession(req, sql) {
     const token = decodeURIComponent(match[1])
 
     const rows = await sql`
-      SELECT u.email FROM neon_auth.session s
+      SELECT u.email, u.role FROM neon_auth.session s
       JOIN neon_auth.user u ON u.id = s."userId"
       WHERE s.token = ${token}
         AND s."expiresAt" > NOW()
     `
     if (!rows.length) return null
-    const email = rows[0].email.toLowerCase()
-    if (!ALLOWED_EMAILS.includes(email)) return null
-    return { email }
+    if (rows[0].role !== 'admin') return null
+    return { email: rows[0].email }
   } catch {
     return null
   }

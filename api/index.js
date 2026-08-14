@@ -13,12 +13,10 @@ app.use(express.json());
 const sql = neon(process.env.DATABASE_URL);
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Emails permitidos para acceso admin
-const ALLOWED_EMAILS = (process.env.ALLOWED_EMAILS || '').split(',').map(e => e.trim().toLowerCase());
-
 // Verificar token de sesión de Better Auth / Neon Auth
 // Los tokens de sesión son opacos y se validan directamente contra la tabla
 // neon_auth.session (el endpoint HTTP /get-session no acepta Bearer tokens).
+// El acceso admin se controla por el rol 'admin' del usuario en la DB.
 const verifySession = async (req) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) return null;
@@ -28,7 +26,7 @@ const verifySession = async (req) => {
 
   try {
     const rows = await sql`
-      SELECT u.email
+      SELECT u.email, u.role
       FROM neon_auth.session s
       JOIN neon_auth.user u ON u.id = s."userId"
       WHERE s.token = ${token}
@@ -37,10 +35,9 @@ const verifySession = async (req) => {
 
     if (!rows.length) return null;
 
-    const email = rows[0].email.toLowerCase();
-    if (!ALLOWED_EMAILS.includes(email)) return null;
+    if (rows[0].role !== 'admin') return null;
 
-    return { email };
+    return { email: rows[0].email };
   } catch (error) {
     console.error('Session verification error:', error);
     return null;

@@ -65,7 +65,8 @@ async function setup() {
   console.log('✅ Setup completado!')
   console.log('')
   console.log('Nota: La autenticación ahora usa Neon Auth con Google.')
-  console.log('Solo los emails en ALLOWED_EMAILS pueden acceder al admin.')
+  console.log('Solo los usuarios con rol admin en neon_auth.user pueden acceder al admin.')
+  console.log('Ejecuta: node scripts/set-admin-roles.js para definir los admins.')
 }
 
 setup().catch(console.error)

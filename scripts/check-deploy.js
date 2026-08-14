@@ -21,8 +21,7 @@ if (!fs.existsSync(path.join(__dirname, '..', '.env'))) {
     const requiredVars = [
         'DATABASE_URL',
         'RESEND_API_KEY',
-        'VITE_NEON_AUTH_URL',
-        'ALLOWED_EMAILS'
+        'VITE_NEON_AUTH_URL'
     ];
 
     requiredVars.forEach(varName => {
@@ -71,5 +70,6 @@ if (hasErrors) {
     console.log('1. Ejecuta: npm run build (para verificar que compila)');
     console.log('2. Ejecuta: vercel (para deployar)');
     console.log('3. Configura las variables de entorno en Vercel');
-    console.log('4. Lee DEPLOY.md para más detalles');
+    console.log('4. Ejecuta: node scripts/set-admin-roles.js (para definir los admins en la DB)');
+    console.log('5. Lee DEPLOY.md para más detalles');
 }
