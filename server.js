@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import crypto from 'crypto';
 import { neon } from '@neondatabase/serverless';
 import { Resend } from 'resend';
 import dotenv from 'dotenv';
@@ -14,30 +15,50 @@ const sql = neon(process.env.DATABASE_URL);
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Verificar token de sesión de Better Auth / Neon Auth
-// Los tokens de sesión son opacos y se validan directamente contra la tabla
-// neon_auth.session (el endpoint HTTP /get-session no acepta Bearer tokens).
-// El acceso admin se controla por el rol 'admin' del usuario en la DB.
+// El token que envía el cliente es un JWT firmado por Neon Auth (Ed25519) que
+// contiene los datos del usuario (email). Se verifica la firma contra la clave
+// pública del proyecto (JWKS) y luego se valida el rol 'admin' en la DB.
+const b64urlToBuffer = (s) => Buffer.from(s.replace(/-/g, '+').replace(/_/g, '/'), 'base64');
+
+const JWKS_URL = 'https://ep-dark-mode-ac6jb8op.neonauth.sa-east-1.aws.neon.tech/neondb/auth/.well-known/jwks.json';
+let jwksKey = null;
+let jwksTime = 0;
+async function getJwksPublicKey() {
+  if (jwksKey && Date.now() - jwksTime < 10 * 60 * 1000) return jwksKey;
+  const res = await fetch(JWKS_URL);
+  const data = await res.json();
+  const jwk = data.keys[0];
+  jwksKey = crypto.createPublicKey({ key: jwk, format: 'jwk' });
+  jwksTime = Date.now();
+  return jwksKey;
+}
+
 const verifySession = async (req) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) return null;
 
-  const token = authHeader.slice(7);
+  const token = authHeader.slice(7).trim();
   if (!token || token === 'undefined') return null;
 
-  try {
-    const rows = await sql`
-      SELECT u.email, u.role
-      FROM neon_auth.session s
-      JOIN neon_auth.user u ON u.id = s."userId"
-      WHERE s.token = ${token}
-        AND s."expiresAt" > NOW()
-    `;
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
 
+  try {
+    const payload = JSON.parse(b64urlToBuffer(parts[1]).toString('utf8'));
+    if (payload.exp && payload.exp * 1000 < Date.now()) return null;
+    if (typeof payload.iss === 'string' && !payload.iss.includes('ep-dark-mode-ac6jb8op')) return null;
+
+    const pubKey = await getJwksPublicKey();
+    const ok = crypto.verify(null, Buffer.from(`${parts[0]}.${parts[1]}`), pubKey, b64urlToBuffer(parts[2]));
+    if (!ok) return null;
+
+    const email = payload.email;
+    if (!email) return null;
+
+    const rows = await sql`SELECT role FROM neon_auth.user WHERE email = ${email} AND role = 'admin'`;
     if (!rows.length) return null;
 
-    if (rows[0].role !== 'admin') return null;
-
-    return { email: rows[0].email };
+    return { email };
   } catch (error) {
     console.error('Session verification error:', error);
     return null;
@@ -77,42 +98,28 @@ app.get('/api/check-access', async (req, res) => {
     if (token) {
       const parts = token.split('.');
       diag.jwt = parts.length === 3;
-      let payload = null;
-      try {
-        payload = JSON.parse(Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8'));
-      } catch (e) {
-        diag.decodeError = String(e.message).slice(0, 120);
-      }
-      if (payload && typeof payload === 'object') {
-        diag.payloadKeys = Object.keys(payload);
-        const preview = {};
-        for (const k of Object.keys(payload)) {
-          const v = payload[k];
-          preview[k] = typeof v === 'string' ? `${v.slice(0, 16)}…(${v.length})` : Array.isArray(v) ? `array(${v.length})` : String(typeof v) + (typeof v === 'number' ? ':' + v : '');
-        }
-        diag.payload = preview;
-        for (const f of ['sub', 'sessionId', 'sessionToken', 'session_token', 'token', 'jti', 'uid']) {
-          const v = payload[f];
-          if (typeof v === 'string' && v.length > 10) {
+      if (diag.jwt) {
+        try {
+          const payload = JSON.parse(b64urlToBuffer(parts[1]).toString('utf8'));
+          const pubKey = await getJwksPublicKey();
+          const sigValid = crypto.verify(null, Buffer.from(`${parts[0]}.${parts[1]}`), pubKey, b64urlToBuffer(parts[2]));
+          diag.jwtVerify = {
+            sigValid,
+            expOk: !(payload.exp && payload.exp * 1000 < Date.now()),
+            jwtEmail: payload.email ?? null,
+            jwtIssOk: typeof payload.iss === 'string' ? payload.iss.includes('ep-dark-mode-ac6jb8op') : null
+          };
+          if (sigValid && payload.email) {
             try {
-              const r = await sql`SELECT u.email, u.role, s."expiresAt" FROM neon_auth.session s JOIN neon_auth.user u ON u.id = s."userId" WHERE s.token = ${v}`;
-              diag[`cand_${f}`] = { len: v.length, found: r.length > 0, email: r[0]?.email ?? null, role: r[0]?.role ?? null, expiresAt: r[0]?.expiresAt ?? null };
+              const r = await sql`SELECT role, email FROM neon_auth.user WHERE email = ${payload.email}`;
+              diag.dbUser = r[0] ?? null;
             } catch (e) {
-              diag[`cand_${f}`] = { err: String(e.message).split('\n')[0].slice(0, 80) };
+              diag.dbUser = { err: String(e.message).split('\n')[0].slice(0, 80) };
             }
           }
+        } catch (e) {
+          diag.jwtVerify = { error: String(e.message).slice(0, 150) };
         }
-      }
-      try {
-        const rows = await sql`
-          SELECT u.email, u.role, s."expiresAt"
-          FROM neon_auth.session s
-          JOIN neon_auth.user u ON u.id = s."userId"
-          WHERE s.token = ${token}
-        `;
-        diag.directMatch = { found: rows.length > 0, email: rows[0]?.email ?? null, role: rows[0]?.role ?? null };
-      } catch (e) {
-        diag.dbError = String(e.message).split('\n')[0].slice(0, 150);
       }
     }
     const user = await verifySession(req);
