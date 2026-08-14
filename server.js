@@ -13,9 +13,6 @@ app.use(express.json());
 const sql = neon(process.env.DATABASE_URL);
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// DIAGNÓSTICO TEMPORAL - se elimina al resolver el acceso
-let __lastVerifyDebug = null;
-
 // Verificar token de sesión de Better Auth / Neon Auth
 // Los tokens de sesión son opacos y se validan directamente contra la tabla
 // neon_auth.session (el endpoint HTTP /get-session no acepta Bearer tokens).
@@ -35,13 +32,6 @@ const verifySession = async (req) => {
       WHERE s.token = ${token}
         AND s."expiresAt" > NOW()
     `;
-    __lastVerifyDebug = {
-      tokenLen: token.length,
-      tokenPrefix: token.slice(0, 12),
-      rows: rows.length,
-      email: rows[0]?.email || null,
-      role: rows[0]?.role || null
-    };
 
     if (!rows.length) return null;
 
@@ -49,7 +39,6 @@ const verifySession = async (req) => {
 
     return { email: rows[0].email };
   } catch (error) {
-    __lastVerifyDebug = { tokenLen: token.length, rows: 0, error: String(error.message).split('\n')[0].slice(0, 200) };
     console.error('Session verification error:', error);
     return null;
   }
@@ -78,32 +67,11 @@ const verifyAdmin = async (req, res, next) => {
 // Endpoint para verificar si el email está permitido
 app.get('/api/check-access', async (req, res) => {
   try {
-    // DIAGNÓSTICO TEMPORAL - se elimina al resolver el acceso
-    let neonAuthReadable = false;
-    let neonAuthError = '';
-    try {
-      await sql`SELECT 1 FROM neon_auth.session LIMIT 1`;
-      neonAuthReadable = true;
-    } catch (e) {
-      neonAuthError = String(e.message).split('\n')[0].slice(0, 200);
-    }
     const user = await verifySession(req);
-    res.json({
-      allowed: !!user,
-      email: user?.email || null,
-      diag: {
-        roleBased: true,
-        nodeEnv: process.env.NODE_ENV || '',
-        dbIsAuthProject: String(process.env.DATABASE_URL || '').includes('ep-dark-mode-ac6jb8op'),
-        dbRole: String(process.env.DATABASE_URL || '').match(/postgres(?:ql)?:\/\/([^:]+):/)?.[1] || '',
-        neonAuthReadable,
-        neonAuthError,
-        verify: __lastVerifyDebug
-      }
-    });
+    res.json({ allowed: !!user, email: user?.email || null });
   } catch (error) {
     console.error('Check access error:', error);
-    res.json({ allowed: false, diag: { roleBased: true, error: String(error.message).slice(0, 200) } });
+    res.json({ allowed: false });
   }
 });
 
