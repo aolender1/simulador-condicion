@@ -16,7 +16,9 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 // Emails permitidos para acceso admin
 const ALLOWED_EMAILS = (process.env.ALLOWED_EMAILS || '').split(',').map(e => e.trim().toLowerCase());
 
-// Verificar JWT token de Better Auth / Neon Auth
+// Verificar token de sesión de Better Auth / Neon Auth
+// Los tokens de sesión son opacos y se validan directamente contra la tabla
+// neon_auth.session (el endpoint HTTP /get-session no acepta Bearer tokens).
 const verifySession = async (req) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) return null;
@@ -25,25 +27,20 @@ const verifySession = async (req) => {
   if (!token || token === 'undefined') return null;
 
   try {
-    // Verificar el token con Neon Auth
-    const response = await fetch(`${process.env.VITE_NEON_AUTH_URL}/get-session`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
+    const rows = await sql`
+      SELECT u.email
+      FROM neon_auth.session s
+      JOIN neon_auth.user u ON u.id = s."userId"
+      WHERE s.token = ${token}
+        AND s."expiresAt" > NOW()
+    `;
 
-    if (!response.ok) return null;
+    if (!rows.length) return null;
 
-    const session = await response.json();
-    const user = session?.user;
+    const email = rows[0].email.toLowerCase();
+    if (!ALLOWED_EMAILS.includes(email)) return null;
 
-    // Verificar si el email está permitido
-    if (user && ALLOWED_EMAILS.includes(user.email?.toLowerCase())) {
-      return user;
-    }
-
-    return null;
+    return { email };
   } catch (error) {
     console.error('Session verification error:', error);
     return null;
@@ -72,37 +69,10 @@ const verifyAdmin = async (req, res, next) => {
 // Endpoint para verificar si el email está permitido
 app.get('/api/check-access', async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
-      return res.json({ allowed: false });
-    }
-
-    const token = authHeader.slice(7);
-    if (!token || token === 'undefined') {
-      return res.json({ allowed: false });
-    }
-
-    // Verificar el token con Neon Auth
-    const response = await fetch(`${process.env.VITE_NEON_AUTH_URL}/get-session`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-
-    if (!response.ok) {
-      return res.json({ allowed: false });
-    }
-
-    const session = await response.json();
-    const user = session?.user;
-
-    // Verificar si el email está permitido
-    const allowed = user && ALLOWED_EMAILS.includes(user.email?.toLowerCase());
-
+    const user = await verifySession(req);
     res.json({
-      allowed,
-      email: user?.email
+      allowed: !!user,
+      email: user?.email || null
     });
   } catch (error) {
     console.error('Check access error:', error);
