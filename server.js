@@ -88,45 +88,11 @@ const verifyAdmin = async (req, res, next) => {
 // Endpoint para verificar si el email está permitido
 app.get('/api/check-access', async (req, res) => {
   try {
-    // DIAGNÓSTICO TEMPORAL - se elimina al resolver el acceso
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
-    let diag = {
-      headerReceived: !!authHeader,
-      tokenLen: token?.length ?? 0
-    };
-    if (token) {
-      const parts = token.split('.');
-      diag.jwt = parts.length === 3;
-      if (diag.jwt) {
-        try {
-          const payload = JSON.parse(b64urlToBuffer(parts[1]).toString('utf8'));
-          const pubKey = await getJwksPublicKey();
-          const sigValid = crypto.verify(null, Buffer.from(`${parts[0]}.${parts[1]}`), pubKey, b64urlToBuffer(parts[2]));
-          diag.jwtVerify = {
-            sigValid,
-            expOk: !(payload.exp && payload.exp * 1000 < Date.now()),
-            jwtEmail: payload.email ?? null,
-            jwtIssOk: typeof payload.iss === 'string' ? payload.iss.includes('ep-dark-mode-ac6jb8op') : null
-          };
-          if (sigValid && payload.email) {
-            try {
-              const r = await sql`SELECT role, email FROM neon_auth.user WHERE email = ${payload.email}`;
-              diag.dbUser = r[0] ?? null;
-            } catch (e) {
-              diag.dbUser = { err: String(e.message).split('\n')[0].slice(0, 80) };
-            }
-          }
-        } catch (e) {
-          diag.jwtVerify = { error: String(e.message).slice(0, 150) };
-        }
-      }
-    }
     const user = await verifySession(req);
-    res.json({ allowed: !!user, email: user?.email || null, diag });
+    res.json({ allowed: !!user, email: user?.email || null });
   } catch (error) {
     console.error('Check access error:', error);
-    res.json({ allowed: false, diag: { error: String(error.message).slice(0, 200) } });
+    res.json({ allowed: false });
   }
 });
 
