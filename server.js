@@ -67,14 +67,31 @@ const verifyAdmin = async (req, res, next) => {
 // Endpoint para verificar si el email está permitido
 app.get('/api/check-access', async (req, res) => {
   try {
+    // DIAGNÓSTICO TEMPORAL - se elimina al resolver el acceso
+    let neonAuthReadable = false;
+    let neonAuthError = '';
+    try {
+      await sql`SELECT 1 FROM neon_auth.session LIMIT 1`;
+      neonAuthReadable = true;
+    } catch (e) {
+      neonAuthError = String(e.message).split('\n')[0].slice(0, 200);
+    }
     const user = await verifySession(req);
     res.json({
       allowed: !!user,
-      email: user?.email || null
+      email: user?.email || null,
+      diag: {
+        roleBased: true,
+        nodeEnv: process.env.NODE_ENV || '',
+        dbIsAuthProject: String(process.env.DATABASE_URL || '').includes('ep-dark-mode-ac6jb8op'),
+        dbRole: String(process.env.DATABASE_URL || '').match(/postgres(?:ql)?:\/\/([^:]+):/)?.[1] || '',
+        neonAuthReadable,
+        neonAuthError
+      }
     });
   } catch (error) {
     console.error('Check access error:', error);
-    res.json({ allowed: false });
+    res.json({ allowed: false, diag: { roleBased: true, error: String(error.message).slice(0, 200) } });
   }
 });
 
