@@ -13,6 +13,9 @@ app.use(express.json());
 const sql = neon(process.env.DATABASE_URL);
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+// DIAGNÓSTICO TEMPORAL - se elimina al resolver el acceso
+let __lastVerifyDebug = null;
+
 // Verificar token de sesión de Better Auth / Neon Auth
 // Los tokens de sesión son opacos y se validan directamente contra la tabla
 // neon_auth.session (el endpoint HTTP /get-session no acepta Bearer tokens).
@@ -32,6 +35,13 @@ const verifySession = async (req) => {
       WHERE s.token = ${token}
         AND s."expiresAt" > NOW()
     `;
+    __lastVerifyDebug = {
+      tokenLen: token.length,
+      tokenPrefix: token.slice(0, 12),
+      rows: rows.length,
+      email: rows[0]?.email || null,
+      role: rows[0]?.role || null
+    };
 
     if (!rows.length) return null;
 
@@ -39,6 +49,7 @@ const verifySession = async (req) => {
 
     return { email: rows[0].email };
   } catch (error) {
+    __lastVerifyDebug = { tokenLen: token.length, rows: 0, error: String(error.message).split('\n')[0].slice(0, 200) };
     console.error('Session verification error:', error);
     return null;
   }
@@ -86,7 +97,8 @@ app.get('/api/check-access', async (req, res) => {
         dbIsAuthProject: String(process.env.DATABASE_URL || '').includes('ep-dark-mode-ac6jb8op'),
         dbRole: String(process.env.DATABASE_URL || '').match(/postgres(?:ql)?:\/\/([^:]+):/)?.[1] || '',
         neonAuthReadable,
-        neonAuthError
+        neonAuthError,
+        verify: __lastVerifyDebug
       }
     });
   } catch (error) {
