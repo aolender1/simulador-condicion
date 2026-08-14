@@ -67,11 +67,38 @@ const verifyAdmin = async (req, res, next) => {
 // Endpoint para verificar si el email está permitido
 app.get('/api/check-access', async (req, res) => {
   try {
+    // DIAGNÓSTICO TEMPORAL - se elimina al resolver el acceso
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
+    let diag = {
+      headerReceived: !!authHeader,
+      bearerPrefix: authHeader ? authHeader.slice(0, 12) : null,
+      tokenLen: token?.length ?? 0
+    };
+    if (token) {
+      try {
+        const rows = await sql`
+          SELECT u.email, u.role, s."expiresAt", s."createdAt"
+          FROM neon_auth.session s
+          JOIN neon_auth.user u ON u.id = s."userId"
+          WHERE s.token = ${token}
+        `;
+        diag.tokenPrefix = token.slice(0, 12);
+        diag.found = rows.length > 0;
+        diag.email = rows[0]?.email ?? null;
+        diag.role = rows[0]?.role ?? null;
+        diag.expiresAt = rows[0]?.expiresAt ?? null;
+        diag.createdAt = rows[0]?.createdAt ?? null;
+        diag.now = new Date().toISOString();
+      } catch (e) {
+        diag.dbError = String(e.message).split('\n')[0].slice(0, 150);
+      }
+    }
     const user = await verifySession(req);
-    res.json({ allowed: !!user, email: user?.email || null });
+    res.json({ allowed: !!user, email: user?.email || null, diag });
   } catch (error) {
     console.error('Check access error:', error);
-    res.json({ allowed: false });
+    res.json({ allowed: false, diag: { error: String(error.message).slice(0, 200) } });
   }
 });
 

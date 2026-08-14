@@ -13,6 +13,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEmailAllowed, setIsEmailAllowed] = useState(false);
+  const [accessData, setAccessData] = useState(null);
   const navigate = useNavigate();
 
   const devLogin = () => {
@@ -39,6 +40,7 @@ function App() {
           });
           const data = await res.json();
           setIsEmailAllowed(data.allowed === true);
+          setAccessData(data);
         }
       } catch (error) {
         console.error('Error verificando sesión:', error);
@@ -75,6 +77,11 @@ function App() {
           <button className="btn btn-primary" onClick={handleLogout}>
             Cerrar Sesión
           </button>
+          {accessData?.diag && (
+            <pre style={{ marginTop: '1rem', fontSize: '0.7rem', textAlign: 'left', color: '#888', whiteSpace: 'pre-wrap' }}>
+              {JSON.stringify(accessData.diag, null, 2)}
+            </pre>
+          )}
         </div>
       </div>
     );
