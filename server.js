@@ -72,24 +72,42 @@ app.get('/api/check-access', async (req, res) => {
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
     let diag = {
       headerReceived: !!authHeader,
-      bearerPrefix: authHeader ? authHeader.slice(0, 12) : null,
       tokenLen: token?.length ?? 0
     };
     if (token) {
+      const parts = token.split('.');
+      diag.jwt = parts.length === 3;
+      let payload = null;
+      try {
+        payload = JSON.parse(Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8'));
+      } catch (e) {
+        diag.decodeError = String(e.message).slice(0, 120);
+      }
+      if (payload) {
+        diag.payloadKeys = Object.keys(payload);
+        diag.payload = Object.fromEntries(Object.entries(payload).map(([k, v]) =>
+          typeof v === 'string' ? `${v.slice(0, 14)}…(${v.length})` : v
+        ));
+        for (const f of ['sub', 'sessionId', 'sessionToken', 'session_token', 'token', 'jti']) {
+          const v = payload[f];
+          if (typeof v === 'string' && v.length > 10) {
+            try {
+              const r = await sql`SELECT u.email, u.role, s."expiresAt" FROM neon_auth.session s JOIN neon_auth.user u ON u.id = s."userId" WHERE s.token = ${v}`;
+              diag[`cand_${f}`] = { len: v.length, found: r.length > 0, email: r[0]?.email ?? null, role: r[0]?.role ?? null, expiresAt: r[0]?.expiresAt ?? null };
+            } catch (e) {
+              diag[`cand_${f}`] = { err: String(e.message).split('\n')[0].slice(0, 80) };
+            }
+          }
+        }
+      }
       try {
         const rows = await sql`
-          SELECT u.email, u.role, s."expiresAt", s."createdAt"
+          SELECT u.email, u.role, s."expiresAt"
           FROM neon_auth.session s
           JOIN neon_auth.user u ON u.id = s."userId"
           WHERE s.token = ${token}
         `;
-        diag.tokenPrefix = token.slice(0, 12);
-        diag.found = rows.length > 0;
-        diag.email = rows[0]?.email ?? null;
-        diag.role = rows[0]?.role ?? null;
-        diag.expiresAt = rows[0]?.expiresAt ?? null;
-        diag.createdAt = rows[0]?.createdAt ?? null;
-        diag.now = new Date().toISOString();
+        diag.directMatch = { found: rows.length > 0, email: rows[0]?.email ?? null, role: rows[0]?.role ?? null };
       } catch (e) {
         diag.dbError = String(e.message).split('\n')[0].slice(0, 150);
       }
