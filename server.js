@@ -83,12 +83,15 @@ app.get('/api/check-access', async (req, res) => {
       } catch (e) {
         diag.decodeError = String(e.message).slice(0, 120);
       }
-      if (payload) {
+      if (payload && typeof payload === 'object') {
         diag.payloadKeys = Object.keys(payload);
-        diag.payload = Object.fromEntries(Object.entries(payload).map(([k, v]) =>
-          typeof v === 'string' ? `${v.slice(0, 14)}…(${v.length})` : v
-        ));
-        for (const f of ['sub', 'sessionId', 'sessionToken', 'session_token', 'token', 'jti']) {
+        const preview = {};
+        for (const k of Object.keys(payload)) {
+          const v = payload[k];
+          preview[k] = typeof v === 'string' ? `${v.slice(0, 16)}…(${v.length})` : Array.isArray(v) ? `array(${v.length})` : String(typeof v) + (typeof v === 'number' ? ':' + v : '');
+        }
+        diag.payload = preview;
+        for (const f of ['sub', 'sessionId', 'sessionToken', 'session_token', 'token', 'jti', 'uid']) {
           const v = payload[f];
           if (typeof v === 'string' && v.length > 10) {
             try {
