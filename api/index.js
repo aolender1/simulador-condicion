@@ -50,8 +50,7 @@ const verifySession = async (req) => {
   }
 };
 
-// Middleware para rutas admin (simplificado por ahora)
-// El frontend ya verifica la sesión, pero esto agrega una capa extra de seguridad
+// Middleware para rutas admin
 const verifyAdmin = async (req, res, next) => {
   // Intentar verificar con token si está presente
   const authHeader = req.headers.authorization;
@@ -63,8 +62,10 @@ const verifyAdmin = async (req, res, next) => {
     }
   }
 
-  // Por ahora, permitir acceso si no hay token (el frontend ya validó)
-  // En producción, deberías verificar siempre
+  // En producción se exige una sesión válida. En desarrollo se permite el acceso.
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(401).json({ error: 'No autorizado' });
+  }
   next();
 };
 
@@ -101,8 +102,7 @@ app.get('/api/check-access', async (req, res) => {
 
     res.json({
       allowed,
-      email: user?.email,
-      allowedEmails: ALLOWED_EMAILS // Para debugging (eliminar en producción)
+      email: user?.email
     });
   } catch (error) {
     console.error('Check access error:', error);
@@ -167,7 +167,7 @@ app.post('/api/events/:id/alert', verifyAdmin, async (req, res) => {
     const events = await sql`SELECT * FROM events WHERE id = ${req.params.id}`;
     if (events.length === 0) return res.status(404).json({ error: 'Evento no encontrado' });
     const event = events[0];
-    const contacts = await sql`SELECT email FROM contacts`;
+    const contacts = await sql`SELECT email FROM contacts WHERE email IS NOT NULL AND email <> '' AND enabled_email = true`;
     if (contacts.length === 0) return res.status(400).json({ error: 'No hay contactos registrados para enviar alertas' });
 
     const startDate = new Date(event.start_date).toLocaleString('es-AR');
@@ -223,6 +223,44 @@ app.post('/api/contacts', verifyAdmin, async (req, res) => {
     res.json(result[0]);
   } catch (error) {
     console.error('Create contact error:', error);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+app.put('/api/contacts/:id', verifyAdmin, async (req, res) => {
+  try {
+    const { email, phone, enabled_email, enabled_whatsapp } = req.body;
+    const nextEmail = enabled_email !== undefined ? enabled_email : null;
+    const nextWhatsapp = enabled_whatsapp !== undefined ? enabled_whatsapp : null;
+    const result = await sql`
+      UPDATE contacts SET
+        email = COALESCE(${email}, email),
+        phone = COALESCE(${phone}, phone),
+        enabled_email = COALESCE(${nextEmail}, enabled_email),
+        enabled_whatsapp = COALESCE(${nextWhatsapp}, enabled_whatsapp)
+      WHERE id = ${req.params.id} RETURNING *
+    `;
+    res.json(result[0]);
+  } catch (error) {
+    console.error('Update contact error:', error);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+app.post('/api/contacts/set-all', verifyAdmin, async (req, res) => {
+  try {
+    const { enabled_email, enabled_whatsapp } = req.body;
+    const nextEmail = enabled_email !== undefined ? enabled_email : null;
+    const nextWhatsapp = enabled_whatsapp !== undefined ? enabled_whatsapp : null;
+    const result = await sql`
+      UPDATE contacts SET
+        enabled_email = COALESCE(${nextEmail}, enabled_email),
+        enabled_whatsapp = COALESCE(${nextWhatsapp}, enabled_whatsapp)
+      RETURNING *
+    `;
+    res.json(result);
+  } catch (error) {
+    console.error('Set all contacts error:', error);
     res.status(500).json({ error: 'Error del servidor' });
   }
 });

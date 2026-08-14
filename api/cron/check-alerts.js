@@ -158,9 +158,12 @@ export default async function handler(req, res) {
     }
     console.log('[v0] Eventos en ventana:', events.map(e => e.title))
 
-    const contacts = await sql`SELECT email, phone FROM contacts`
-    const emails = contacts.map(c => c.email).filter(e => e && e.trim() !== '')
-    const phoneContacts = contacts.filter(c => c.phone && c.phone.trim() !== '')
+    const contacts = await sql`SELECT email, phone, enabled_email, enabled_whatsapp FROM contacts`
+    const emails = contacts
+      .filter(c => c.enabled_email !== false)
+      .map(c => c.email)
+      .filter(e => e && e.trim() !== '')
+    const phoneContacts = contacts.filter(c => c.enabled_whatsapp !== false && c.phone && c.phone.trim() !== '')
     const fromAddress = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
 
     let sentCount = 0

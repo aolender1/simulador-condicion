@@ -1,14 +1,7 @@
 import { neon } from '@neondatabase/serverless'
 import { Resend } from 'resend'
 
-const ALLOWED_EMAILS = [
-  'albertolender@gmail.com',
-  'lynchjonai@gmail.com',
-  'maxipadilla.unsl@gmail.com',
-  'supremacyaaa@gmail.com',
-  'valeriamorenoarg@gmail.com',
-  'rominaflorenciaramos93@gmail.com'
-]
+const ALLOWED_EMAILS = (process.env.ALLOWED_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
 
 async function verifySession(req, sql) {
   try {

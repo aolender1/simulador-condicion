@@ -49,6 +49,16 @@ async function setup() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `
+
+  // Agregar columnas de canales de envío si no existen
+  try {
+    await sql`ALTER TABLE contacts ADD COLUMN IF NOT EXISTS enabled_email BOOLEAN DEFAULT true`
+    await sql`ALTER TABLE contacts ADD COLUMN IF NOT EXISTS enabled_whatsapp BOOLEAN DEFAULT true`
+    console.log('✓ Columnas de contactos verificadas/creadas')
+  } catch (err) {
+    console.log('Error al verificar/crear columnas de contactos:', err)
+  }
+
   console.log('✓ Tabla contacts verificada')
 
   console.log('')

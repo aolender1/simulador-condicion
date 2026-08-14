@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { authClient } from './lib/auth';
+import MainLayout from './components/MainLayout';
 import SignIn from './pages/SignIn';
 import Admin from './pages/Admin';
 import Calendar from './pages/Calendar';
+import StudyPlan from './components/StudyPlan';
+import Calculadora from './components/Calculadora';
+import CalendarioAcademico from './pages/CalendarioAcademico';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -12,7 +16,7 @@ function App() {
   const navigate = useNavigate();
 
   const devLogin = () => {
-    const devUser = { name: 'Dev Admin', email: 'albertolender@gmail.com' };
+    const devUser = { name: 'Dev Admin', email: 'dev@unsldatos.local' };
     setUser(devUser);
     setIsEmailAllowed(true);
     setLoading(false);
@@ -27,19 +31,14 @@ function App() {
         if (session?.data?.user) {
           setUser(session.data.user);
 
-          // Verificación de acceso con lista local
-          const allowedEmails = [
-            'albertolender@gmail.com',
-            'lynchjonai@gmail.com',
-            'maxipadilla.unsl@gmail.com',
-            'supremacyaaa@gmail.com',
-            'valeriamorenoarg@gmail.com',
-            'rominaflorenciaramos93@gmail.com'
-          ];
-
-          const userEmail = session.data.user.email?.toLowerCase();
-          const isAllowed = allowedEmails.includes(userEmail);
-          setIsEmailAllowed(isAllowed);
+          // Verificación de acceso realizada en el servidor (lista de emails en ALLOWED_EMAILS,
+          // nunca expuesta en el código de la página)
+          const token = session?.data?.session?.token;
+          const res = await fetch('/api/check-access', {
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+          });
+          const data = await res.json();
+          setIsEmailAllowed(data.allowed === true);
         }
       } catch (error) {
         console.error('Error verificando sesión:', error);
@@ -83,7 +82,12 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<Calendar />} />
+      <Route element={<MainLayout />}>
+        <Route index element={<Calendar />} />
+        <Route path="correlatividades" element={<StudyPlan />} />
+        <Route path="calculadora" element={<Calculadora />} />
+        <Route path="calendario-academico" element={<CalendarioAcademico />} />
+      </Route>
       <Route
         path="/login"
         element={user ? <Navigate to="/admin" /> : <SignIn onDevLogin={import.meta.env.DEV ? devLogin : null} />}

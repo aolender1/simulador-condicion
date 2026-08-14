@@ -1,12 +1,23 @@
-import { useState, useEffect } from 'react'
-import { authClient } from '../lib/auth'
+import { useState, useEffect, useMemo } from 'react'
+import { getAuthHeaders } from '../lib/auth'
 import ConfirmModal from './ConfirmModal'
+
+const SORT_OPTIONS = {
+  'email-asc': { field: 'email', dir: 'asc', label: 'Email (A-Z)' },
+  'email-desc': { field: 'email', dir: 'desc', label: 'Email (Z-A)' },
+  'phone-asc': { field: 'phone', dir: 'asc', label: 'Teléfono (A-Z)' },
+  'phone-desc': { field: 'phone', dir: 'desc', label: 'Teléfono (Z-A)' },
+  'created-desc': { field: 'created_at', dir: 'desc', label: 'Más recientes primero' },
+  'created-asc': { field: 'created_at', dir: 'asc', label: 'Más antiguos primero' }
+}
 
 function ContactsManager() {
   const [contacts, setContacts] = useState([])
   const [loading, setLoading] = useState(true)
   const [newEmail, setNewEmail] = useState('')
   const [newPhone, setNewPhone] = useState('')
+  const [search, setSearch] = useState('')
+  const [sortBy, setSortBy] = useState('created-desc')
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
 
@@ -16,15 +27,14 @@ function ContactsManager() {
     title: '',
     message: '',
     onConfirm: () => { },
-    type: 'default'
+    type: 'default',
+    confirmText: 'Confirmar'
   })
-
-  // El servidor valida la sesión por cookie de better-auth, no se necesita JWT
-  const getAuthHeaders = () => ({ 'Content-Type': 'application/json' })
 
   const fetchContacts = async () => {
     try {
-    const res = await fetch('/api/contacts', { headers: getAuthHeaders() })
+      const headers = await getAuthHeaders()
+      const res = await fetch('/api/contacts', { headers })
 
       if (!res.ok) {
         throw new Error('Error al cargar contactos')
@@ -61,7 +71,7 @@ function ContactsManager() {
   }, [error])
 
   const closeConfirmModal = () => {
-    setConfirmModal({ ...confirmModal, isOpen: false })
+    setConfirmModal(prev => ({ ...prev, isOpen: false }))
   }
 
   const handleAdd = async (e) => {
@@ -69,9 +79,10 @@ function ContactsManager() {
     if (!newEmail.trim()) return
 
     try {
+      const headers = await getAuthHeaders()
       const res = await fetch('/api/contacts', {
         method: 'POST',
-        headers: getAuthHeaders(),
+        headers,
         body: JSON.stringify({ email: newEmail, phone: newPhone || null })
       })
 
@@ -98,10 +109,11 @@ function ContactsManager() {
       title: 'Eliminar Contacto',
       message: `¿Estás seguro de que deseas eliminar el contacto "${contact?.email}"?${contact?.phone ? ` (${contact.phone})` : ''}`,
       type: 'danger',
+      confirmText: 'Eliminar',
       onConfirm: async () => {
         closeConfirmModal()
         try {
-          const headers = await getAuthHeaders();
+          const headers = await getAuthHeaders()
           const res = await fetch(`/api/contacts/${id}`, {
             method: 'DELETE',
             headers
@@ -120,6 +132,97 @@ function ContactsManager() {
       }
     })
   }
+
+  // Alternar un canal para un contacto puntual
+  const toggleContactChannel = async (contact, field, value) => {
+    try {
+      const headers = await getAuthHeaders()
+      const res = await fetch(`/api/contacts/${contact.id}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ [field]: value })
+      })
+
+      if (!res.ok) {
+        throw new Error('Error al actualizar contacto')
+      }
+
+      const updated = await res.json()
+      setContacts(prev => prev.map(c => c.id === updated.id ? { ...c, ...updated } : c))
+      setError('')
+      setSuccessMessage('Contacto actualizado correctamente')
+    } catch (err) {
+      console.error(err)
+      setError(err.message)
+    }
+  }
+
+  // Activar/desactivar un canal para toda la tabla
+  const toggleAllChannels = (channel) => {
+    const field = channel === 'email' ? 'enabled_email' : 'enabled_whatsapp'
+    const label = channel === 'email' ? 'Email' : 'WhatsApp'
+    const allEnabled = contacts.length > 0 && contacts.every(c => c[field] !== false)
+    const target = !allEnabled
+
+    setConfirmModal({
+      isOpen: true,
+      title: `${target ? 'Activar' : 'Desactivar'} ${label} para todos`,
+      message: `¿Estás seguro de que deseas ${target ? 'activar' : 'desactivar'} el envío por ${label} para todos los contactos (${contacts.length})?`,
+      type: target ? 'success' : 'default',
+      confirmText: target ? 'Activar' : 'Desactivar',
+      onConfirm: async () => {
+        closeConfirmModal()
+        try {
+          const headers = await getAuthHeaders()
+          const res = await fetch('/api/contacts/set-all', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ [field]: target })
+          })
+
+          if (!res.ok) {
+            throw new Error('Error al actualizar contactos')
+          }
+
+          const updated = await res.json()
+          setContacts(Array.isArray(updated) ? updated : [])
+          setError('')
+          setSuccessMessage(`Envío por ${label} ${target ? 'activado' : 'desactivado'} para todos los contactos`)
+        } catch (err) {
+          console.error(err)
+          setError(err.message)
+        }
+      }
+    })
+  }
+
+  // Filtrado por búsqueda y ordenamiento
+  const filteredContacts = useMemo(() => {
+    const query = search.trim().toLowerCase()
+    const filtered = query
+      ? contacts.filter(c =>
+          (c.email || '').toLowerCase().includes(query) ||
+          (c.phone || '').toLowerCase().includes(query)
+        )
+      : contacts
+
+    const { field, dir } = SORT_OPTIONS[sortBy] || SORT_OPTIONS['created-desc']
+
+    return filtered.slice().sort((a, b) => {
+      let cmp
+      if (field === 'created_at') {
+        cmp = new Date(a[field] || 0) - new Date(b[field] || 0)
+      } else {
+        const av = (a[field] || '').toString().toLowerCase()
+        const bv = (b[field] || '').toString().toLowerCase()
+        cmp = av < bv ? -1 : av > bv ? 1 : 0
+      }
+      return dir === 'desc' ? -cmp : cmp
+    })
+  }, [contacts, search, sortBy])
+
+  const allEmailEnabled = contacts.length > 0 && contacts.every(c => c.enabled_email !== false)
+  const allWhatsappEnabled = contacts.length > 0 && contacts.every(c => c.enabled_whatsapp !== false)
 
   if (loading) return <div className="loading">Cargando...</div>
 
@@ -151,23 +254,87 @@ function ContactsManager() {
           <button type="submit" className="btn btn-primary">Agregar</button>
         </form>
 
-        <div className="contacts-list">
-          {contacts.length === 0 ? (
-            <p>No hay contactos registrados</p>
-          ) : (
-            contacts.map(contact => (
-              <div key={contact.id} className="contact-item">
-                <div className="contact-info">
-                  <span className="contact-email">{contact.email}</span>
-                  {contact.phone && <span className="contact-phone">{contact.phone}</span>}
-                </div>
-                <button className="btn btn-danger" onClick={() => handleDelete(contact.id)}>
-                  Eliminar
-                </button>
-              </div>
-            ))
-          )}
+        <div className="contacts-toolbar">
+          <input
+            type="search"
+            className="contacts-search"
+            placeholder="Buscar por email o teléfono..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="contacts-sort">
+            {Object.entries(SORT_OPTIONS).map(([value, opt]) => (
+              <option key={value} value={value}>{opt.label}</option>
+            ))}
+          </select>
+          <div className="contacts-bulk">
+            <button
+              className={`btn ${allEmailEnabled ? 'btn-secondary' : 'btn-success'}`}
+              onClick={() => toggleAllChannels('email')}
+              title={allEmailEnabled ? 'Desactivar envío por email para todos' : 'Activar envío por email para todos'}
+            >
+              {allEmailEnabled ? '✉️ Desactivar Email (todos)' : '✉️ Activar Email (todos)'}
+            </button>
+            <button
+              className={`btn ${allWhatsappEnabled ? 'btn-secondary' : 'btn-success'}`}
+              onClick={() => toggleAllChannels('whatsapp')}
+              title={allWhatsappEnabled ? 'Desactivar envío por WhatsApp para todos' : 'Activar envío por WhatsApp para todos'}
+            >
+              {allWhatsappEnabled ? '💬 Desactivar WhatsApp (todos)' : '💬 Activar WhatsApp (todos)'}
+            </button>
+          </div>
         </div>
+
+        <table className="events-table contacts-table">
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Teléfono</th>
+              <th style={{ textAlign: 'center' }}>Email</th>
+              <th style={{ textAlign: 'center' }}>WhatsApp</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredContacts.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="no-results">
+                  {contacts.length === 0 ? 'No hay contactos registrados' : 'No se encontraron contactos con la búsqueda actual'}
+                </td>
+              </tr>
+            ) : (
+              filteredContacts.map(contact => (
+                <tr key={contact.id}>
+                  <td>{contact.email}</td>
+                  <td>{contact.phone || '—'}</td>
+                  <td style={{ textAlign: 'center' }}>
+                    <label className="toggle" title={contact.enabled_email !== false ? 'Desactivar envío por email' : 'Activar envío por email'}>
+                      <input
+                        type="checkbox"
+                        checked={contact.enabled_email !== false}
+                        onChange={e => toggleContactChannel(contact, 'enabled_email', e.target.checked)}
+                      />
+                      <span className="toggle-slider"></span>
+                    </label>
+                  </td>
+                  <td style={{ textAlign: 'center' }}>
+                    <label className="toggle" title={contact.enabled_whatsapp !== false ? 'Desactivar envío por WhatsApp' : 'Activar envío por WhatsApp'}>
+                      <input
+                        type="checkbox"
+                        checked={contact.enabled_whatsapp !== false}
+                        onChange={e => toggleContactChannel(contact, 'enabled_whatsapp', e.target.checked)}
+                      />
+                      <span className="toggle-slider"></span>
+                    </label>
+                  </td>
+                  <td className="actions">
+                    <button className="btn btn-danger" onClick={() => handleDelete(contact.id)}>Eliminar</button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
       <ConfirmModal
@@ -177,7 +344,7 @@ function ContactsManager() {
         type={confirmModal.type}
         onConfirm={confirmModal.onConfirm}
         onCancel={closeConfirmModal}
-        confirmText="Eliminar"
+        confirmText={confirmModal.confirmText}
         cancelText="Cancelar"
       />
     </div>

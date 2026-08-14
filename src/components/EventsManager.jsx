@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { authClient } from '../lib/auth'
+import { getAuthHeaders } from '../lib/auth'
 import ConfirmModal from './ConfirmModal'
 
 const MATERIAS = [
@@ -52,8 +52,7 @@ function EventsManager() {
     type: 'default'
   })
 
-  // El servidor valida la sesión por cookie de better-auth, no se necesita JWT
-  const getAuthHeaders = () => ({ 'Content-Type': 'application/json' })
+  // El servidor valida la sesión por token de better-auth (ver getAuthHeaders en lib/auth)
 
   const fetchEvents = async () => {
     try {
@@ -193,7 +192,7 @@ function EventsManager() {
     try {
       const res = await fetch(url, {
         method,
-        headers: getAuthHeaders(),
+        headers: await getAuthHeaders(),
         body: JSON.stringify(payload)
       })
 
@@ -226,7 +225,7 @@ function EventsManager() {
         try {
           const res = await fetch(`/api/events/${id}`, {
             method: 'DELETE',
-            headers: getAuthHeaders()
+            headers: await getAuthHeaders()
           })
 
           if (!res.ok) {
@@ -259,7 +258,7 @@ function EventsManager() {
         try {
           const res = await fetch(`/api/events/${id}/alert`, {
             method: 'POST',
-            headers: getAuthHeaders()
+            headers: await getAuthHeaders()
           })
 
           const data = await res.json()
