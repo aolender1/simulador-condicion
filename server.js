@@ -107,26 +107,49 @@ app.get('/api/events', async (req, res) => {
 });
 
 
+const insertEvent = async (ev) => {
+  const { materia, title, event_link, start_date, end_date, color, alert_status, alert_email, alert_whatsapp, alert_hours_email, alert_hours_whatsapp } = ev;
+  const hoursEmail = Array.isArray(alert_hours_email) ? alert_hours_email : (alert_hours_email ? JSON.parse(alert_hours_email) : [24]);
+  const hoursWa = Array.isArray(alert_hours_whatsapp) ? alert_hours_whatsapp : (alert_hours_whatsapp ? JSON.parse(alert_hours_whatsapp) : [2]);
+  const result = await sql`
+    INSERT INTO events (materia, title, event_link, start_date, end_date, color, alert_status, alert_email, alert_whatsapp, alert_hours_email, alert_hours_whatsapp)
+    VALUES (
+      ${materia}, ${title}, ${event_link || null}, ${start_date}, ${end_date}, ${color},
+      ${alert_status || 'pending'},
+      ${alert_email !== undefined ? alert_email : true},
+      ${alert_whatsapp !== undefined ? alert_whatsapp : false},
+      ${`{${hoursEmail.join(',')}}`},
+      ${`{${hoursWa.join(',')}}`}
+    )
+    RETURNING *
+  `;
+  return result[0];
+};
+
 app.post('/api/events', verifyAdmin, async (req, res) => {
   try {
-    const { materia, title, event_link, start_date, end_date, color, alert_status, alert_email, alert_whatsapp, alert_hours_email, alert_hours_whatsapp } = req.body;
-    const hoursEmail = Array.isArray(alert_hours_email) ? alert_hours_email : (alert_hours_email ? JSON.parse(alert_hours_email) : [24]);
-    const hoursWa = Array.isArray(alert_hours_whatsapp) ? alert_hours_whatsapp : (alert_hours_whatsapp ? JSON.parse(alert_hours_whatsapp) : [2]);
-    const result = await sql`
-      INSERT INTO events (materia, title, event_link, start_date, end_date, color, alert_status, alert_email, alert_whatsapp, alert_hours_email, alert_hours_whatsapp)
-      VALUES (
-        ${materia}, ${title}, ${event_link || null}, ${start_date}, ${end_date}, ${color},
-        ${alert_status || 'pending'},
-        ${alert_email !== undefined ? alert_email : true},
-        ${alert_whatsapp !== undefined ? alert_whatsapp : false},
-        ${`{${hoursEmail.join(',')}}`},
-        ${`{${hoursWa.join(',')}}`}
-      )
-      RETURNING *
-    `;
-    res.json(result[0]);
+    const result = await insertEvent(req.body);
+    res.json(result);
   } catch (error) {
     console.error('Create event error:', error);
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
+// Creación en lote para eventos recurrentes (ya expandidos en el cliente)
+app.post('/api/events/batch', verifyAdmin, async (req, res) => {
+  try {
+    const { events } = req.body;
+    if (!Array.isArray(events) || events.length === 0 || events.length > 500) {
+      return res.status(400).json({ error: 'Lista de eventos inválida' });
+    }
+    const created = [];
+    for (const ev of events) {
+      created.push(await insertEvent(ev));
+    }
+    res.json(created);
+  } catch (error) {
+    console.error('Batch create error:', error);
     res.status(500).json({ error: 'Error del servidor' });
   }
 });

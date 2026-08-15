@@ -414,6 +414,28 @@ footer a:hover {
     text-align: center;
 }
 
+.modal.modal-wide {
+    max-width: 920px;
+    width: 95%;
+}
+
+.modal-grid {
+    display: block;
+}
+
+@media (min-width: 768px) {
+    .modal-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 1.5rem;
+        align-items: start;
+    }
+
+    .modal-grid .span-2 {
+        grid-column: 1 / -1;
+    }
+}
+
 .modal-close {
     position: absolute;
     right: 20px;

@@ -2,11 +2,9 @@ import { useState, useEffect } from 'react'
 import { getAuthHeaders } from '../lib/auth'
 import ConfirmModal from './ConfirmModal'
 
+// Materias que ocupa actualmente el usuario
 const MATERIAS = [
   'Ingles',
-  'Laboratorio de Datos',
-  'Probabilidad Aplicada',
-  'Modelos Parametricos',
   'Tecnicas de Muestreo',
   'Taller Integrador I',
   'Modelos No Parametricos',
@@ -14,10 +12,44 @@ const MATERIAS = [
   'AVISO IMPORTANTE'
 ]
 
-const COLORS = [
-  '#3788d8', '#28a745', '#dc3545', '#ffc107',
-  '#17a2b8', '#6f42c1', '#fd7e14', '#20c997'
+// Color fijo por materia (ya no hay selector de color)
+const MATERIA_COLORS = {
+  'Ingles': '#3788d8',
+  'Tecnicas de Muestreo': '#28a745',
+  'Taller Integrador I': '#dc3545',
+  'Modelos No Parametricos': '#6f42c1',
+  'Calculo II': '#fd7e14',
+  'AVISO IMPORTANTE': '#d63384'
+}
+
+const DEFAULT_COLOR = '#3788d8'
+
+// Pretipos de evento. 'Otros' permite escribir el título manualmente.
+const EVENT_TYPES = [
+  'Clase',
+  'Encuentro sincrono',
+  'Examen Parcial',
+  'Actividad acreditable de autoevaluación',
+  'Trabajo Practico Evaluativo (TPE)',
+  'Trabajo Práctico de Aplicación Grupal (TPAG)',
+  'Entrega Trabajo Practico',
+  'Otros'
 ]
+
+const addDays = (d, n) => { const r = new Date(d); r.setDate(r.getDate() + n); return r }
+
+// Cuenta cuántas ocurrencias generaría la repetición configurada
+const countOccurrences = (form) => {
+  if (form.recurrence === 'none' || !form.start_date || !form.start_time || !form.end_date) return 1
+  const interval = Math.max(1, parseInt(form.recurrence_interval, 10) || 1)
+  const stepDays = form.recurrence === 'daily' ? interval : interval * 7
+  const until = new Date(`${form.end_date}T23:59:59`)
+  const start = new Date(`${form.start_date}T${form.start_time}:00`)
+  let count = 0
+  let cur = new Date(start)
+  while (cur <= until && count < 500) { count++; cur = addDays(cur, stepDays) }
+  return count
+}
 
 function EventsManager() {
   const [events, setEvents] = useState([])
@@ -30,12 +62,15 @@ function EventsManager() {
   const [form, setForm] = useState({
     materia: MATERIAS[0],
     title: '',
+    event_type: 'Otros',
+    event_comment: '',
     event_link: '',
     start_date: '',
     start_time: '',
     end_date: '',
     end_time: '',
-    color: COLORS[0],
+    recurrence: 'none',
+    recurrence_interval: 1,
     alert_status: 'pending',
     alert_email: true,
     alert_whatsapp: false,
@@ -51,8 +86,6 @@ function EventsManager() {
     onConfirm: () => { },
     type: 'default'
   })
-
-  // El servidor valida la sesión por token de better-auth (ver getAuthHeaders en lib/auth)
 
   const fetchEvents = async () => {
     try {
@@ -91,12 +124,15 @@ function EventsManager() {
     setForm({
       materia: MATERIAS[0],
       title: '',
+      event_type: 'Otros',
+      event_comment: '',
       event_link: '',
       start_date: '',
       start_time: '',
       end_date: '',
       end_time: '',
-      color: COLORS[0],
+      recurrence: 'none',
+      recurrence_interval: 1,
       alert_status: 'pending',
       alert_email: true,
       alert_whatsapp: false,
@@ -134,12 +170,15 @@ function EventsManager() {
       setForm({
         materia: event.materia,
         title: event.title,
+        event_type: 'Otros',
+        event_comment: '',
         event_link: event.event_link || '',
         start_date: hasExplicitStart ? formatLocalDate(startDate) : '',
         start_time: hasExplicitStart ? formatLocalTime(startDate) : '',
         end_date: formatLocalDate(endDate),
         end_time: formatLocalTime(endDate),
-        color: event.color,
+        recurrence: 'none',
+        recurrence_interval: 1,
         alert_status: event.alert_status,
         alert_email: event.alert_email !== false,
         alert_whatsapp: event.alert_whatsapp === true,
@@ -161,39 +200,90 @@ function EventsManager() {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    // Crear fecha de fin en zona horaria local (requerida)
-    const endLocal = new Date(`${form.end_date}T${form.end_time}:00`)
+    // Título según pretipo
+    const title = form.event_type === 'Otros'
+      ? form.title.trim()
+      : (form.event_comment.trim() ? `${form.event_type} - ${form.event_comment.trim()}` : form.event_type)
+    if (!title) {
+      setModalError('El título es requerido')
+      return
+    }
 
-    // Fecha de inicio es opcional: si se completa, debe ser anterior a la de fin
-    let startLocal = null
-    if (form.start_date && form.start_time) {
-      startLocal = new Date(`${form.start_date}T${form.start_time}:00`)
-      if (startLocal >= endLocal) {
-        setModalError('La fecha y hora de inicio debe ser anterior a la fecha y hora de fin')
+    // Color fijo de la materia
+    const color = MATERIA_COLORS[form.materia] || DEFAULT_COLOR
+
+    const isRecurring = form.recurrence !== 'none'
+    if (isRecurring) {
+      if (!form.start_date || !form.start_time) {
+        setModalError('Fecha y hora de inicio son requeridas para eventos recurrentes')
+        return
+      }
+      if (!form.end_time || form.end_time <= form.start_time) {
+        setModalError('La hora de fin debe ser posterior a la hora de inicio')
         return
       }
     }
 
-    // Convertir a ISO string (UTC) para guardar en la DB
-    // Si no hay inicio, se usa la fecha de fin como inicio (evento puntual)
-    const start_date = startLocal ? startLocal.toISOString() : endLocal.toISOString()
-    const end_date = endLocal.toISOString()
-
-    const payload = {
-      ...form,
-      start_date,
-      end_date
+    const base = {
+      materia: form.materia,
+      title,
+      event_link: form.event_link || '',
+      color,
+      alert_status: form.alert_status,
+      alert_email: form.alert_email,
+      alert_whatsapp: form.alert_whatsapp,
+      alert_hours_email: form.alert_hours_email,
+      alert_hours_whatsapp: form.alert_hours_whatsapp
     }
 
+    // Generar ocurrencias
+    let occurrences
+    if (isRecurring) {
+      const startLocal = new Date(`${form.start_date}T${form.start_time}:00`)
+      const durationMs = new Date(`${form.start_date}T${form.end_time}:00`).getTime() - startLocal.getTime()
+      const until = new Date(`${form.end_date}T23:59:59`)
+      const interval = Math.max(1, parseInt(form.recurrence_interval, 10) || 1)
+      const stepDays = form.recurrence === 'daily' ? interval : interval * 7
+      occurrences = []
+      let cur = new Date(startLocal)
+      let guard = 0
+      while (cur <= until && guard < 500) {
+        occurrences.push({ ...base, start_date: new Date(cur).toISOString(), end_date: new Date(cur.getTime() + durationMs).toISOString() })
+        cur = addDays(cur, stepDays)
+        guard++
+      }
+      if (!occurrences.length) {
+        setModalError('La fecha de fin debe ser posterior a la fecha de inicio')
+        return
+      }
+    } else {
+      const endLocal = new Date(`${form.end_date}T${form.end_time}:00`)
+      let startLocal = null
+      if (form.start_date && form.start_time) {
+        startLocal = new Date(`${form.start_date}T${form.start_time}:00`)
+        if (startLocal >= endLocal) {
+          setModalError('La fecha y hora de inicio debe ser anterior a la fecha y hora de fin')
+          return
+        }
+      }
+      // Si no hay inicio, se usa la fecha de fin como inicio (evento puntual)
+      occurrences = [{
+        ...base,
+        start_date: (startLocal || endLocal).toISOString(),
+        end_date: endLocal.toISOString()
+      }]
+    }
 
-    const url = editingEvent ? `/api/events/${editingEvent.id}` : '/api/events'
+    const isBatch = occurrences.length > 1 && !editingEvent
+    const url = editingEvent ? `/api/events/${editingEvent.id}` : (isBatch ? '/api/events/batch' : '/api/events')
     const method = editingEvent ? 'PUT' : 'POST'
+    const body = isBatch ? { events: occurrences } : occurrences[0]
 
     try {
       const res = await fetch(url, {
         method,
         headers: await getAuthHeaders(),
-        body: JSON.stringify(payload)
+        body: JSON.stringify(body)
       })
 
       if (!res.ok) {
@@ -205,7 +295,10 @@ function EventsManager() {
       resetForm()
       setError('')
       setModalError('')
-      setSuccessMessage(editingEvent ? 'Evento actualizado correctamente' : 'Evento creado correctamente')
+      setSuccessMessage(
+        editingEvent ? 'Evento actualizado correctamente'
+          : (isBatch ? `Evento creado (${occurrences.length} ocurrencias)` : 'Evento creado correctamente')
+      )
       fetchEvents()
     } catch (err) {
       console.error(err)
@@ -281,6 +374,11 @@ function EventsManager() {
 
   const today = new Date();
   const minDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+  const selectedColor = MATERIA_COLORS[form.materia] || DEFAULT_COLOR
+  const resultingTitle = form.event_type === 'Otros'
+    ? (form.title || '')
+    : (form.event_comment.trim() ? `${form.event_type} - ${form.event_comment.trim()}` : form.event_type)
 
   return (
     <div>
@@ -377,150 +475,207 @@ function EventsManager() {
 
       {showModal && (
         <div className="modal-overlay" onClick={() => { setShowModal(false); setModalError(''); }}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
+          <div className="modal modal-wide" onClick={e => e.stopPropagation()}>
             <span className="modal-close" onClick={() => { setShowModal(false); setModalError(''); }}>×</span>
             <h2>{editingEvent ? 'Editar Evento' : 'Nuevo Evento'}</h2>
             {modalError && <div className="error-message" style={{ marginBottom: '1rem' }}>{modalError}</div>}
             <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label>Materia</label>
-                <select value={form.materia} onChange={e => setForm({ ...form, materia: e.target.value })}>
-                  {MATERIAS.map(m => <option key={m} value={m}>{m}</option>)}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Título</label>
-                <textarea
-                  value={form.title}
-                  onChange={e => setForm({ ...form, title: e.target.value })}
-                  required
-                  rows="3"
-                  placeholder="Ej: Examen Parcial - Unidad 1 y 2"
-                />
-              </div>
-              <div className="form-group">
-                <label>Link del Evento <span style={{ fontWeight: 'normal', fontSize: '0.82rem', color: '#888' }}>(privado - solo en notificaciones, opcional)</span></label>
-                <input
-                  type="url"
-                  value={form.event_link}
-                  onChange={e => setForm({ ...form, event_link: e.target.value })}
-                  placeholder="https://zoom.us/j/123456789"
-                  style={{ width: '100%', boxSizing: 'border-box' }}
-                />
-              </div>
-              <div className="form-group">
-                <label>Fecha Inicio <span style={{ fontWeight: 'normal', fontSize: '0.82rem', color: '#888' }}>(opcional)</span></label>
-                <input
-                  type="date"
-                  value={form.start_date}
-                  onChange={e => setForm({ ...form, start_date: e.target.value })}
-                  min={minDate}
-                  max="2029-12-31"
-                />
-              </div>
-              <div className="form-group">
-                <label>Hora Inicio <span style={{ fontWeight: 'normal', fontSize: '0.82rem', color: '#888' }}>(opcional)</span></label>
-                <input
-                  type="time"
-                  value={form.start_time}
-                  onChange={e => setForm({ ...form, start_time: e.target.value })}
-                />
-              </div>
-              <div className="form-group">
-                <label>Fecha Fin</label>
-                <input
-                  type="date"
-                  value={form.end_date}
-                  onChange={e => setForm({ ...form, end_date: e.target.value })}
-                  required
-                  min={minDate}
-                  max="2029-12-31"
-                />
-              </div>
-              <div className="form-group">
-                <label>Hora Fin</label>
-                <input
-                  type="time"
-                  value={form.end_time}
-                  onChange={e => setForm({ ...form, end_time: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Color</label>
-                <div className="color-picker">
-                  {COLORS.map(c => (
-                    <div
-                      key={c}
-                      className={`color-option ${form.color === c ? 'selected' : ''}`}
-                      style={{ background: c }}
-                      onClick={() => setForm({ ...form, color: c })}
-                    />
-                  ))}
+              <div className="modal-grid">
+                <div className="form-group">
+                  <label>Materia</label>
+                  <select value={form.materia} onChange={e => setForm({ ...form, materia: e.target.value })}>
+                    {MATERIAS.map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
                 </div>
-              </div>
+                <div className="form-group">
+                  <label>Pretipo de evento</label>
+                  <select value={form.event_type} onChange={e => setForm({ ...form, event_type: e.target.value })}>
+                    {EVENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Color (fijo de la materia)</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span className="color-badge" style={{ background: selectedColor }}></span>
+                    <span style={{ fontSize: '0.85rem', color: '#666' }}>{selectedColor}</span>
+                  </div>
+                </div>
 
-              <div className="form-group">
-                <label>Canales de alerta</label>
-
-                {/* Email */}
-                <div style={{ border: '1px solid #e0e0e0', borderRadius: '8px', padding: '0.75rem 1rem', marginTop: '0.5rem' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: '600', cursor: 'pointer', marginBottom: '0.5rem' }}>
-                    <input
-                      type="checkbox"
-                      checked={form.alert_email}
-                      onChange={e => setForm({ ...form, alert_email: e.target.checked })}
+                {form.event_type === 'Otros' ? (
+                  <div className="form-group span-2">
+                    <label>Título</label>
+                    <textarea
+                      value={form.title}
+                      onChange={e => setForm({ ...form, title: e.target.value })}
+                      required
+                      rows="2"
+                      placeholder="Ej: Examen Parcial - Unidad 1 y 2"
                     />
-                    Email
-                  </label>
-                  {form.alert_email && (
+                  </div>
+                ) : (
+                  <div className="form-group span-2">
+                    <label>Detalle adicional (opcional)</label>
+                    <input
+                      type="text"
+                      value={form.event_comment}
+                      onChange={e => setForm({ ...form, event_comment: e.target.value })}
+                      placeholder="Ej: N° 1, hay que grabarse"
+                      style={{ width: '100%', boxSizing: 'border-box' }}
+                    />
+                    <div style={{ fontSize: '0.82rem', color: '#666', marginTop: '0.4rem' }}>
+                      Título resultante: <strong>{resultingTitle}</strong>
+                    </div>
+                  </div>
+                )}
+
+                <div className="form-group span-2">
+                  <label>Link del Evento <span style={{ fontWeight: 'normal', fontSize: '0.82rem', color: '#888' }}>(privado - solo en notificaciones, opcional)</span></label>
+                  <input
+                    type="url"
+                    value={form.event_link}
+                    onChange={e => setForm({ ...form, event_link: e.target.value })}
+                    placeholder="https://zoom.us/j/123456789"
+                    style={{ width: '100%', boxSizing: 'border-box' }}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Fecha Inicio <span style={{ fontWeight: 'normal', fontSize: '0.82rem', color: '#888' }}>{form.recurrence !== 'none' ? '(primera ocurrencia)' : '(opcional)'}</span></label>
+                  <input
+                    type="date"
+                    value={form.start_date}
+                    onChange={e => setForm({ ...form, start_date: e.target.value })}
+                    min={minDate}
+                    max="2029-12-31"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Hora Inicio</label>
+                  <input
+                    type="time"
+                    value={form.start_time}
+                    onChange={e => setForm({ ...form, start_time: e.target.value })}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Fecha Fin <span style={{ fontWeight: 'normal', fontSize: '0.82rem', color: '#888' }}>{form.recurrence !== 'none' ? '(última ocurrencia)' : ''}</span></label>
+                  <input
+                    type="date"
+                    value={form.end_date}
+                    onChange={e => setForm({ ...form, end_date: e.target.value })}
+                    required
+                    min={minDate}
+                    max="2029-12-31"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Hora Fin</label>
+                  <input
+                    type="time"
+                    value={form.end_time}
+                    onChange={e => setForm({ ...form, end_time: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="form-group span-2">
+                  <label>Repetición</label>
+                  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
                     <div>
-                      <span style={{ fontSize: '0.82rem', color: '#666', display: 'block', marginBottom: '0.4rem' }}>Avisar con anticipación:</span>
-                      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                        {[1, 2, 6, 12, 24, 48].map(h => (
-                          <label key={h} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontWeight: 'normal', cursor: 'pointer', fontSize: '0.9rem' }}>
-                            <input
-                              type="radio"
-                              name="alert_hours_email"
-                              checked={form.alert_hours_email[0] === h}
-                              onChange={() => setForm({ ...form, alert_hours_email: [h] })}
-                            />
-                            {h}h
-                          </label>
-                        ))}
+                      <label style={{ fontWeight: 'bold', marginBottom: '0.3rem' }}>Frecuencia</label>
+                      <select value={form.recurrence} onChange={e => setForm({ ...form, recurrence: e.target.value })}>
+                        <option value="none">No se repite</option>
+                        <option value="weekly">Cada semana</option>
+                        <option value="daily">Cada día</option>
+                      </select>
+                    </div>
+                    {form.recurrence !== 'none' && (
+                      <div>
+                        <label style={{ fontWeight: 'bold', marginBottom: '0.3rem' }}>Intervalo</label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <input
+                            type="number"
+                            min="1"
+                            max="99"
+                            value={form.recurrence_interval}
+                            onChange={e => setForm({ ...form, recurrence_interval: e.target.value })}
+                            style={{ width: '80px' }}
+                          />
+                          <span style={{ fontSize: '0.85rem', color: '#666' }}>{form.recurrence === 'daily' ? 'día(s)' : 'semana(s)'}</span>
+                        </div>
                       </div>
+                    )}
+                  </div>
+                  {form.recurrence !== 'none' && (
+                    <div style={{ fontSize: '0.82rem', color: '#666', marginTop: '0.5rem' }}>
+                      Se crearán <strong>{countOccurrences(form)}</strong> eventos desde {form.start_date || '—'} hasta {form.end_date || '—'}.
                     </div>
                   )}
                 </div>
 
-                {/* WhatsApp */}
-                <div style={{ border: '1px solid #e0e0e0', borderRadius: '8px', padding: '0.75rem 1rem', marginTop: '0.5rem' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: '600', cursor: 'pointer', marginBottom: '0.5rem' }}>
-                    <input
-                      type="checkbox"
-                      checked={form.alert_whatsapp}
-                      onChange={e => setForm({ ...form, alert_whatsapp: e.target.checked })}
-                    />
-                    WhatsApp
-                  </label>
-                  {form.alert_whatsapp && (
-                    <div>
-                      <span style={{ fontSize: '0.82rem', color: '#666', display: 'block', marginBottom: '0.4rem' }}>Avisar con anticipación:</span>
-                      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                        {[1, 2, 6, 12, 24, 48].map(h => (
-                          <label key={h} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontWeight: 'normal', cursor: 'pointer', fontSize: '0.9rem' }}>
-                            <input
-                              type="radio"
-                              name="alert_hours_whatsapp"
-                              checked={form.alert_hours_whatsapp[0] === h}
-                              onChange={() => setForm({ ...form, alert_hours_whatsapp: [h] })}
-                            />
-                            {h}h
-                          </label>
-                        ))}
+                <div className="form-group span-2">
+                  <div style={{ width: '100%' }}>
+                    <label>Canales de alerta</label>
+                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                      <div style={{ flex: '1 1 45%', minWidth: '260px', border: '1px solid #e0e0e0', borderRadius: '8px', padding: '0.75rem 1rem' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: '600', cursor: 'pointer', marginBottom: '0.5rem' }}>
+                          <input
+                            type="checkbox"
+                            checked={form.alert_email}
+                            onChange={e => setForm({ ...form, alert_email: e.target.checked })}
+                          />
+                          Email
+                        </label>
+                        {form.alert_email && (
+                          <div>
+                            <span style={{ fontSize: '0.82rem', color: '#666', display: 'block', marginBottom: '0.4rem' }}>Avisar con anticipación:</span>
+                            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                              {[1, 2, 6, 12, 24, 48].map(h => (
+                                <label key={h} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontWeight: 'normal', cursor: 'pointer', fontSize: '0.9rem' }}>
+                                  <input
+                                    type="radio"
+                                    name="alert_hours_email"
+                                    checked={form.alert_hours_email[0] === h}
+                                    onChange={() => setForm({ ...form, alert_hours_email: [h] })}
+                                  />
+                                  {h}h
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{ flex: '1 1 45%', minWidth: '260px', border: '1px solid #e0e0e0', borderRadius: '8px', padding: '0.75rem 1rem' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: '600', cursor: 'pointer', marginBottom: '0.5rem' }}>
+                          <input
+                            type="checkbox"
+                            checked={form.alert_whatsapp}
+                            onChange={e => setForm({ ...form, alert_whatsapp: e.target.checked })}
+                          />
+                          WhatsApp
+                        </label>
+                        {form.alert_whatsapp && (
+                          <div>
+                            <span style={{ fontSize: '0.82rem', color: '#666', display: 'block', marginBottom: '0.4rem' }}>Avisar con anticipación:</span>
+                            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                              {[1, 2, 6, 12, 24, 48].map(h => (
+                                <label key={h} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontWeight: 'normal', cursor: 'pointer', fontSize: '0.9rem' }}>
+                                  <input
+                                    type="radio"
+                                    name="alert_hours_whatsapp"
+                                    checked={form.alert_hours_whatsapp[0] === h}
+                                    onChange={() => setForm({ ...form, alert_hours_whatsapp: [h] })}
+                                  />
+                                  {h}h
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
               <div className="modal-actions">
