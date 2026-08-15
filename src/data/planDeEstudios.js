@@ -2,8 +2,8 @@ export const planDeEstudios = [
     // AÑO 1 - CUATRIMESTRE 1
     // Agrega tu link de la materia dentro de 'link: ""'. Si está vacío, el botón estará oculto.
     { id: 1, name: "Ciencia, tecnología y sociedad", year: 1, term: 1, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=50595", requirements: { cursar: [], rendir: [] } },
-    { id: 2, name: "Introducción al álgebra", year: 1, term: 1, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=47908", requirements: { cursar: [], rendir: [] } },
-    { id: 3, name: "Cálculo I", year: 1, term: 1, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=48081", requirements: { cursar: [], rendir: [] } },
+    { id: 2, name: "Introducción al álgebra", year: 1, term: 1, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=51283", requirements: { cursar: [], rendir: [] } },
+    { id: 3, name: "Cálculo I", year: 1, term: 1, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=50898", requirements: { cursar: [], rendir: [] } },
 
     // AÑO 1 - CUATRIMESTRE 2
     {
@@ -12,12 +12,12 @@ export const planDeEstudios = [
         }
     },
     {
-        id: 5, name: "Elementos de Programación", year: 1, term: 2, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=49673", requirements: {
+        id: 5, name: "Elementos de Programación", year: 1, term: 2, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=52090", requirements: {
             cursar: [{ id: 2, state: "regular" }], rendir: []
         }
     },
     {
-        id: 6, name: "Introducción al análisis y gestión de datos", year: 1, term: 2, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=49726", requirements: {
+        id: 6, name: "Introducción al análisis y gestión de datos", year: 1, term: 2, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=52022", requirements: {
             cursar: [{ id: 2, state: "regular" }, { id: 3, state: "regular" }], rendir: []
         }
     },
@@ -34,12 +34,12 @@ export const planDeEstudios = [
         }
     },
     {
-        id: 9, name: "Modelos paramétricos", year: 2, term: 1, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=47442", requirements: {
+        id: 9, name: "Modelos paramétricos", year: 2, term: 1, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=50589", requirements: {
             cursar: [{ id: 4, state: "regular" }, { id: 6, state: "regular" }, { id: 2, state: "aprobada" }, { id: 3, state: "aprobada" }], rendir: []
         }
     },
     {
-        id: 10, name: "Inglés (Materia anual)", year: 2, term: 1, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=48130", isAnnual: true, requirements: {
+        id: 10, name: "Inglés (Materia anual)", year: 2, term: 1, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=51117", isAnnual: true, requirements: {
             cursar: [{ id: 1, state: "regular" }, { id: 2, state: "regular" }, { id: 3, state: "regular" }], rendir: []
         }
     },
@@ -51,7 +51,7 @@ export const planDeEstudios = [
         }
     },
     {
-        id: 12, name: "Modelos no paramétricos", year: 2, term: 2, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=49731", requirements: {
+        id: 12, name: "Modelos no paramétricos", year: 2, term: 2, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=51938", requirements: {
             cursar: [{ id: 9, state: "regular" }, { id: 4, state: "aprobada" }, { id: 6, state: "aprobada" }], rendir: []
         }
     },
@@ -61,24 +61,24 @@ export const planDeEstudios = [
         }
     },
     {
-        id: 14, name: "Taller integrador I", year: 2, term: 2, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=49752", requirements: {
+        id: 14, name: "Taller integrador I", year: 2, term: 2, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=52041", requirements: {
             cursar: [{ id: 8, state: "regular" }, { id: 9, state: "regular" }, { id: 4, state: "aprobada" }, { id: 6, state: "aprobada" }], rendir: []
         }
     },
 
     // AÑO 3 - CUATRIMESTRE 1
     {
-        id: 15, name: "Análisis de datos I", year: 3, term: 1, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=47867", requirements: {
+        id: 15, name: "Análisis de datos I", year: 3, term: 1, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=51448", requirements: {
             cursar: [{ id: 12, state: "regular" }, { id: 13, state: "regular" }, { id: 8, state: "aprobada" }, { id: 10, state: "aprobada" }], rendir: []
         }
     },
     {
-        id: 16, name: "Estimación bayesiana", year: 3, term: 1, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=47866", requirements: {
+        id: 16, name: "Estimación bayesiana", year: 3, term: 1, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=51509", requirements: {
             cursar: [{ id: 12, state: "regular" }, { id: 13, state: "regular" }, { id: 8, state: "aprobada" }, { id: 9, state: "aprobada" }], rendir: []
         }
     },
     {
-        id: 17, name: "Datos categóricos", year: 3, term: 1, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=47862", requirements: {
+        id: 17, name: "Datos categóricos", year: 3, term: 1, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=51055", requirements: {
             cursar: [{ id: 12, state: "regular" }, { id: 13, state: "regular" }, { id: 8, state: "aprobada" }, { id: 9, state: "aprobada" }], rendir: []
         }
     },
@@ -102,13 +102,13 @@ export const planDeEstudios = [
 
     // AÑO 4 - CUATRIMESTRE 1
     {
-        id: 21, name: "Descripción y modelización de datos", year: 4, term: 1, link: "", requirements: {
+        id: 21, name: "Descripción y modelización de datos", year: 4, term: 1, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=51450", requirements: {
             cursar: [{ id: 15, state: "aprobada" }, { id: 17, state: "aprobada" }, { id: 18, state: "regular" }, { id: 19, state: "regular" }],
             rendir: [{ id: 18, state: "aprobada" }, { id: 19, "state": "aprobada" }]
         }
     },
     {
-        id: 22, name: "Análisis multivariado", year: 4, term: 1, link: "", requirements: {
+        id: 22, name: "Análisis multivariado", year: 4, term: 1, link: "http://cargaprogramas.unsl.edu.ar/fmn-programas/public_view.php?p=51422", requirements: {
             cursar: [{ id: 15, state: "aprobada" }, { id: 17, state: "aprobada" }, { id: 18, state: "regular" }, { id: 19, state: "regular" }],
             rendir: [{ id: 18, state: "aprobada" }, { id: 19, "state": "aprobada" }]
         }

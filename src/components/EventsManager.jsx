@@ -41,8 +41,7 @@ const addDays = (d, n) => { const r = new Date(d); r.setDate(r.getDate() + n); r
 // Cuenta cuántas ocurrencias generaría la repetición configurada
 const countOccurrences = (form) => {
   if (form.recurrence === 'none' || !form.start_date || !form.start_time || !form.end_date) return 1
-  const interval = Math.max(1, parseInt(form.recurrence_interval, 10) || 1)
-  const stepDays = form.recurrence === 'daily' ? interval : interval * 7
+  const stepDays = form.recurrence === 'daily' ? 1 : 7
   const until = new Date(`${form.end_date}T23:59:59`)
   const start = new Date(`${form.start_date}T${form.start_time}:00`)
   let count = 0
@@ -70,7 +69,6 @@ function EventsManager() {
     end_date: '',
     end_time: '',
     recurrence: 'none',
-    recurrence_interval: 1,
     alert_status: 'pending',
     alert_email: true,
     alert_whatsapp: false,
@@ -132,7 +130,6 @@ function EventsManager() {
       end_date: '',
       end_time: '',
       recurrence: 'none',
-      recurrence_interval: 1,
       alert_status: 'pending',
       alert_email: true,
       alert_whatsapp: false,
@@ -178,7 +175,6 @@ function EventsManager() {
         end_date: formatLocalDate(endDate),
         end_time: formatLocalTime(endDate),
         recurrence: 'none',
-        recurrence_interval: 1,
         alert_status: event.alert_status,
         alert_email: event.alert_email !== false,
         alert_whatsapp: event.alert_whatsapp === true,
@@ -242,8 +238,7 @@ function EventsManager() {
       const startLocal = new Date(`${form.start_date}T${form.start_time}:00`)
       const durationMs = new Date(`${form.start_date}T${form.end_time}:00`).getTime() - startLocal.getTime()
       const until = new Date(`${form.end_date}T23:59:59`)
-      const interval = Math.max(1, parseInt(form.recurrence_interval, 10) || 1)
-      const stepDays = form.recurrence === 'daily' ? interval : interval * 7
+      const stepDays = form.recurrence === 'daily' ? 1 : 7
       occurrences = []
       let cur = new Date(startLocal)
       let guard = 0
@@ -557,26 +552,40 @@ function EventsManager() {
                     onChange={e => setForm({ ...form, start_time: e.target.value })}
                   />
                 </div>
-                <div className="form-group">
-                  <label>Fecha Fin <span style={{ fontWeight: 'normal', fontSize: '0.82rem', color: '#888' }}>{form.recurrence !== 'none' ? '(última ocurrencia)' : ''}</span></label>
-                  <input
-                    type="date"
-                    value={form.end_date}
-                    onChange={e => setForm({ ...form, end_date: e.target.value })}
-                    required
-                    min={minDate}
-                    max="2029-12-31"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Hora Fin</label>
-                  <input
-                    type="time"
-                    value={form.end_time}
-                    onChange={e => setForm({ ...form, end_time: e.target.value })}
-                    required
-                  />
-                </div>
+                {form.recurrence !== 'none' ? (
+                  <div className="form-group span-2">
+                    <label>Hora Fin <span style={{ fontWeight: 'normal', fontSize: '0.82rem', color: '#888' }}>(hasta cuándo dura cada clase/ocurrencia)</span></label>
+                    <input
+                      type="time"
+                      value={form.end_time}
+                      onChange={e => setForm({ ...form, end_time: e.target.value })}
+                      required
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <div className="form-group">
+                      <label>Fecha Fin</label>
+                      <input
+                        type="date"
+                        value={form.end_date}
+                        onChange={e => setForm({ ...form, end_date: e.target.value })}
+                        required
+                        min={minDate}
+                        max="2029-12-31"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Hora Fin</label>
+                      <input
+                        type="time"
+                        value={form.end_time}
+                        onChange={e => setForm({ ...form, end_time: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </>
+                )}
 
                 <div className="form-group span-2">
                   <label>Repetición</label>
@@ -591,18 +600,15 @@ function EventsManager() {
                     </div>
                     {form.recurrence !== 'none' && (
                       <div>
-                        <label style={{ fontWeight: 'bold', marginBottom: '0.3rem' }}>Intervalo</label>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                          <input
-                            type="number"
-                            min="1"
-                            max="99"
-                            value={form.recurrence_interval}
-                            onChange={e => setForm({ ...form, recurrence_interval: e.target.value })}
-                            style={{ width: '80px' }}
-                          />
-                          <span style={{ fontSize: '0.85rem', color: '#666' }}>{form.recurrence === 'daily' ? 'día(s)' : 'semana(s)'}</span>
-                        </div>
+                        <label style={{ fontWeight: 'bold', marginBottom: '0.3rem' }}>Repetir hasta</label>
+                        <input
+                          type="date"
+                          value={form.end_date}
+                          onChange={e => setForm({ ...form, end_date: e.target.value })}
+                          required
+                          min={minDate}
+                          max="2029-12-31"
+                        />
                       </div>
                     )}
                   </div>
