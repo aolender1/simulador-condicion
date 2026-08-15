@@ -76,6 +76,9 @@ function EventsManager() {
     alert_hours_whatsapp: [2]
   })
 
+  // Filtros de la tabla de eventos
+  const [filters, setFilters] = useState({ materia: '', title: '', alert: '' })
+
   // Estado para modales de confirmación
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
@@ -375,6 +378,19 @@ function EventsManager() {
     ? (form.title || '')
     : (form.event_comment.trim() ? `${form.event_type} - ${form.event_comment.trim()}` : form.event_type)
 
+  const alertLabel = (s) => s === 'sent' ? 'Enviado' :
+    s === 'email_sent' ? 'Enviado Mail' :
+    s === 'whatsapp_sent' ? 'Enviado WA' : 'Pendiente'
+
+  const filteredEvents = events.filter(ev => {
+    if (filters.materia && ev.materia !== filters.materia) return false
+    if (filters.title && !ev.title.toLowerCase().includes(filters.title.toLowerCase())) return false
+    if (filters.alert && alertLabel(ev.alert_status) !== filters.alert) return false
+    return true
+  })
+
+  const uniqueMaterias = [...new Set(events.map(ev => ev.materia).filter(Boolean))].sort()
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
@@ -388,6 +404,39 @@ function EventsManager() {
       {successMessage && <div className="success-message" style={{ marginBottom: '1rem' }}>{successMessage}</div>}
 
       <div className="card">
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end', padding: '1rem 1rem 0' }}>
+          <div>
+            <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', fontSize: '0.85rem' }}>Filtrar por materia</label>
+            <select value={filters.materia} onChange={e => setFilters({ ...filters, materia: e.target.value })}>
+              <option value="">Todas</option>
+              {uniqueMaterias.map(m => <option key={m} value={m}>{m}</option>)}
+            </select>
+          </div>
+          <div style={{ flex: '1 1 220px' }}>
+            <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', fontSize: '0.85rem' }}>Buscar por título</label>
+            <input
+              type="text"
+              value={filters.title}
+              onChange={e => setFilters({ ...filters, title: e.target.value })}
+              placeholder="Ej: parcial, TPE, clase..."
+              style={{ width: '100%', boxSizing: 'border-box' }}
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', fontSize: '0.85rem' }}>Estado de alerta</label>
+            <select value={filters.alert} onChange={e => setFilters({ ...filters, alert: e.target.value })}>
+              <option value="">Todas</option>
+              <option value="Pendiente">Pendiente</option>
+              <option value="Enviado">Enviado</option>
+              <option value="Enviado Mail">Enviado Mail</option>
+              <option value="Enviado WA">Enviado WA</option>
+            </select>
+          </div>
+          {(filters.materia || filters.title || filters.alert) && (
+            <button className="btn btn-secondary" onClick={() => setFilters({ materia: '', title: '', alert: '' })}>Limpiar filtros</button>
+          )}
+          <span style={{ fontSize: '0.82rem', color: '#888', marginLeft: 'auto' }}>{filteredEvents.length} evento(s)</span>
+        </div>
         <table className="events-table">
           <thead>
             <tr>
@@ -402,7 +451,7 @@ function EventsManager() {
             </tr>
           </thead>
           <tbody>
-            {events.map(event => (
+            {filteredEvents.map(event => (
               <tr key={event.id}>
                 <td>{event.materia}</td>
                 <td>{event.title}</td>
@@ -448,12 +497,9 @@ function EventsManager() {
                 </td>
                 <td>
                   {(() => {
-                    const s = event.alert_status
-                    const label = s === 'sent' ? 'Enviado' :
-                      s === 'email_sent' ? 'Enviado Mail' :
-                      s === 'whatsapp_sent' ? 'Enviado WA' : 'Pendiente'
-                    const cls = s === 'sent' ? 'sent' :
-                      s === 'email_sent' || s === 'whatsapp_sent' ? 'partial' : 'pending'
+                    const label = alertLabel(event.alert_status)
+                    const cls = event.alert_status === 'sent' ? 'sent' :
+                      event.alert_status === 'email_sent' || event.alert_status === 'whatsapp_sent' ? 'partial' : 'pending'
                     return <span className={`alert-badge ${cls}`}>{label}</span>
                   })()}
                 </td>
@@ -464,6 +510,13 @@ function EventsManager() {
                 </td>
               </tr>
             ))}
+            {filteredEvents.length === 0 && (
+              <tr>
+                <td colSpan="8" style={{ textAlign: 'center', color: '#888', padding: '1.5rem' }}>
+                  No hay eventos que coincidan con los filtros.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
