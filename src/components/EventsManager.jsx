@@ -77,7 +77,7 @@ function EventsManager() {
   })
 
   // Filtros de la tabla de eventos
-  const [filters, setFilters] = useState({ materia: '', title: '', alert: '' })
+  const [filters, setFilters] = useState({ materia: '', title: '', alert: '', channel: '', dateFrom: '', dateTo: '' })
 
   // Estado para modales de confirmación
   const [confirmModal, setConfirmModal] = useState({
@@ -386,10 +386,17 @@ function EventsManager() {
     if (filters.materia && ev.materia !== filters.materia) return false
     if (filters.title && !ev.title.toLowerCase().includes(filters.title.toLowerCase())) return false
     if (filters.alert && alertLabel(ev.alert_status) !== filters.alert) return false
+    if (filters.channel === 'email' && ev.alert_email !== true) return false
+    if (filters.channel === 'whatsapp' && ev.alert_whatsapp !== true) return false
+    if (filters.channel === 'ninguno' && (ev.alert_email === true || ev.alert_whatsapp === true)) return false
+    const start = new Date(ev.start_date)
+    if (filters.dateFrom && start < new Date(`${filters.dateFrom}T00:00:00`)) return false
+    if (filters.dateTo && start > new Date(`${filters.dateTo}T23:59:59`)) return false
     return true
   })
 
   const uniqueMaterias = [...new Set(events.map(ev => ev.materia).filter(Boolean))].sort()
+  const hasActiveFilters = filters.materia || filters.title || filters.alert || filters.channel || filters.dateFrom || filters.dateTo
 
   return (
     <div>
@@ -432,8 +439,35 @@ function EventsManager() {
               <option value="Enviado WA">Enviado WA</option>
             </select>
           </div>
-          {(filters.materia || filters.title || filters.alert) && (
-            <button className="btn btn-secondary" onClick={() => setFilters({ materia: '', title: '', alert: '' })}>Limpiar filtros</button>
+          <div>
+            <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', fontSize: '0.85rem' }}>Canal de alerta</label>
+            <select value={filters.channel} onChange={e => setFilters({ ...filters, channel: e.target.value })}>
+              <option value="">Cualquiera</option>
+              <option value="email">Solo Email</option>
+              <option value="whatsapp">Solo WhatsApp</option>
+              <option value="ninguno">Sin canales</option>
+            </select>
+          </div>
+          <div>
+            <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', fontSize: '0.85rem' }}>Inicio desde</label>
+            <input
+              type="date"
+              value={filters.dateFrom}
+              onChange={e => setFilters({ ...filters, dateFrom: e.target.value })}
+              max="2029-12-31"
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontWeight: '600', marginBottom: '0.3rem', fontSize: '0.85rem' }}>Inicio hasta</label>
+            <input
+              type="date"
+              value={filters.dateTo}
+              onChange={e => setFilters({ ...filters, dateTo: e.target.value })}
+              max="2029-12-31"
+            />
+          </div>
+          {hasActiveFilters && (
+            <button className="btn btn-secondary" onClick={() => setFilters({ materia: '', title: '', alert: '', channel: '', dateFrom: '', dateTo: '' })}>Limpiar filtros</button>
           )}
           <span style={{ fontSize: '0.82rem', color: '#888', marginLeft: 'auto' }}>{filteredEvents.length} evento(s)</span>
         </div>
